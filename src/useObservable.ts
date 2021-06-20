@@ -9,12 +9,7 @@ export const useObservable = <T>(o: Observable<T>, default_value: T) => {
 
     useEffect(() => {
 
-        const subcription = o.subscribe(d => {
-            ss({...d})
-            console.log(d)
-            // setInterval(() => ss({items: [], options:{}} as any ), 500)
-            // mounting && ss(d)
-        })
+        const subcription = o.subscribe(d => ss({ ...d }))
 
         return () => {
             subcription.unsubscribe()
