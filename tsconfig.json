@@ -1,0 +1,27 @@
+{
+	"compilerOptions": {
+		"declaration": true,
+		"jsx": "react",
+		"lib": [
+			"dom",
+			"es2017",
+			"es2019.array"
+		],
+		"module": "CommonJS",
+		"target": "es6",
+		"outDir": "build",
+		"esModuleInterop": true,
+		"sourceMap": false
+	},
+	"include": [
+		"src"
+	],
+	"exclude": [
+		"node_modules",
+		"build",
+		"out",
+		"bin",
+		"tests"
+	],
+	"files": ["src/index.ts"]
+}
