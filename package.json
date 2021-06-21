@@ -11,12 +11,12 @@
         "build/**/*"
     ],
     "dependencies": {
-        "@livequery/client": "^1.0.5",
+        "@livequery/client": "^1.0.7",
         "react": "^17.0.2",
         "rxjs": "^7.1.0"
     },
     "devDependencies": {
-        "@livequery/types": "^1.0.18",
+        "@livequery/types": "^1.0.23",
         "@types/react": "^17.0.11"
     },
     "peerDependencies": {
