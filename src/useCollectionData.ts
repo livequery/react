@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
-import { useCollectionAction } from "./useCollectionAction"
 import { CollectionObservable, CollectionOption } from '@livequery/client'
 import { useObservable } from "./useObservable"
 import { QueryOption } from "../../types/build"
@@ -15,10 +14,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
   const transporter = useLiveQueryContext().transporter
 
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
-  const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false })
-
-  const { add, remove, trigger, update } = useCollectionAction(ref, collection_options)
-
+  const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false }) 
   useEffect(() => {
     ref && !collection_options?.lazy && client.fetch_more()
   }, [ref])
@@ -34,10 +30,6 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     filter: client.filter.bind(client),
     has_more,
     empty: !error && Object.keys(items).length == 0 && !loading,
-    filters: options?.filters,
-    add,
-    update,
-    remove,
-    trigger
+    filters: options?.filters 
   }
 }
