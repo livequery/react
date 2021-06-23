@@ -21,15 +21,19 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     ref && !collection_options?.lazy && client.fetch_more()
   }, [ref])
 
-
-  const c = Object.assign(client, {
+  return {
     items,
     loading,
     error,
     has_more,
     empty: !error && Object.keys(items).length == 0 && !loading,
-    filters: options?.filters
-  })
-
-  return c as Omit<typeof c, "lift" | "source" | "subscribe" | "operator" | "pipe" | "toPromise" | "forEach">
+    filters: options?.filters,
+    add: client.add.bind(client) as typeof client.add,
+    fetch_more: client.fetch_more.bind(client) as typeof client.fetch_more,
+    filter: client.filter.bind(client) as typeof client.filter,
+    reload: client.reload.bind(client) as typeof client.reload,
+    reset: client.reset.bind(client) as typeof client.reset,
+    trigger: client.trigger.bind(client) as typeof client.trigger,
+    update: client.update.bind(client) as typeof client.update,
+  }
 }
