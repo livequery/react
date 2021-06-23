@@ -6,7 +6,7 @@ export const useFunctionMonitor = <T extends Function>(fn: T) => {
     const excute = (async (...args: any[]) => {
         update({ data: null, loading: true, error: null })
         try {
-            update({ data: await fn(), error: null, loading: false })
+            update({ data: await fn(...args), error: null, loading: false })
         } catch (error) {
             update({ data: null, error, loading: false })
         }
