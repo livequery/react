@@ -14,7 +14,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
   const transporter = useLiveQueryContext().transporter
 
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
-  
+
   const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false })
   useEffect(() => {
     ref && !collection_options?.lazy && client.fetch_more()
@@ -32,6 +32,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     add: client.add.bind(client),
     remove: client.remove.bind(client),
     update: client.update.bind(client),
+    trigger: client.trigger.bind(client),
     has_more,
     empty: !error && Object.keys(items).length == 0 && !loading,
     filters: options?.filters
