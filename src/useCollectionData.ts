@@ -3,7 +3,6 @@ import { useLiveQueryContext } from "./LiveQueryContext"
 import { CollectionObservable, CollectionOption } from '@livequery/client'
 import { useObservable } from "./useObservable"
 import { QueryOption } from "../../types/build"
-import { Observable } from "rxjs"
 
 export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
   lazy: boolean,
@@ -27,7 +26,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     error,
     has_more,
     empty: !error && Object.keys(items).length == 0 && !loading,
-    filters: options?.filters,
+    filters: options || {},
     add: client.add.bind(client) as typeof client.add,
     fetch_more: client.fetch_more.bind(client) as typeof client.fetch_more,
     filter: client.filter.bind(client) as typeof client.filter,
