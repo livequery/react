@@ -16,6 +16,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
 
   const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false })
+
   useEffect(() => {
     ref && !collection_options?.lazy && client.fetch_more()
   }, [ref])
@@ -27,12 +28,12 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     has_more,
     empty: !error && Object.keys(items).length == 0 && !loading,
     filters: options || {},
-    add: client.add.bind(client) as typeof client.add,
-    fetch_more: client.fetch_more.bind(client) as typeof client.fetch_more,
-    filter: client.filter.bind(client) as typeof client.filter,
-    reload: client.reload.bind(client) as typeof client.reload,
-    reset: client.reset.bind(client) as typeof client.reset,
-    trigger: client.trigger.bind(client) as typeof client.trigger,
-    update: client.update.bind(client) as typeof client.update,
+    add: client?.add.bind(client) as typeof client.add,
+    fetch_more: client?.fetch_more.bind(client) as typeof client.fetch_more,
+    filter: client?.filter.bind(client) as typeof client.filter,
+    reload: client?.reload.bind(client) as typeof client.reload,
+    reset: client?.reset.bind(client) as typeof client.reset,
+    trigger: client?.trigger.bind(client) as typeof client.trigger,
+    update: client?.update.bind(client) as typeof client.update,
   }
 }

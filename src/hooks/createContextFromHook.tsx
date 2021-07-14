@@ -1,10 +1,17 @@
-import React from 'react'
-import { createContext, PropsWithChildren, useContext } from "react"
+import React, { PropsWithChildren, ReactNode } from 'react'
+import { createContext, useContext } from "react"
 
-export const createContextFromHook = <T, K>(fn: (props: T) => K) => {
+export const createContextFromHook = <T, K>(fn: (props?: T) => K) => {
     const context = createContext<K>({} as K)
-    return [
-        () => useContext(context),
-        (props: PropsWithChildren<T>) => <context.Provider value={fn(props)}>{props.children}</context.Provider>
-    ] as [() => K, (props: PropsWithChildren<T>) => JSX.Element]
+    const getContext = () => useContext(context)
+    const hook = (props?: T) => {
+        const value = fn(props)
+        const Provider = ({ children }: PropsWithChildren<{}>) => (
+            <context.Provider value={value}>
+                {children}
+            </context.Provider>
+        )
+        return [value, Provider] as [K, typeof Provider]
+    }
+    return [hook, getContext] as [typeof hook, typeof getContext]
 }

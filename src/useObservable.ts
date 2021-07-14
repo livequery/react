@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Observable } from 'rxjs'
 
-export const useObservable = <T>(o: Observable<T>, default_value: T) => {
+export const useObservable = <T>(o: Observable<T> | null, default_value: T) => {
 
     let mounting = true
 
@@ -9,10 +9,10 @@ export const useObservable = <T>(o: Observable<T>, default_value: T) => {
 
     useEffect(() => {
 
-        const subcription = o.subscribe(d => ss({ ...d }))
+        const subcription = o?.subscribe(d => ss({ ...d }))
 
         return () => {
-            subcription.unsubscribe()
+            subcription?.unsubscribe()
             mounting = false
         }
     }, [o])

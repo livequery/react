@@ -4,9 +4,8 @@ import { createContextFromHook } from './hooks/createContextFromHook'
 
 
 export type LiveQueryContextOption = {
-  transporter: Transporter 
+  transporter: Transporter
 }
 
 
-
-export const [useLiveQueryContext, LiveQueryContextProvider] = createContextFromHook((props: LiveQueryContextOption) => props)
+export const [useLiveQuery, useLiveQueryContext] = createContextFromHook((props: LiveQueryContextOption) => props)
