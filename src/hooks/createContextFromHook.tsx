@@ -11,7 +11,7 @@ export const createContextFromHook = <T, K>(fn: (props?: T) => K) => {
                 {children}
             </context.Provider>
         )
-        return [value, Provider] as [K, typeof Provider]
+        return [Provider, value] as [typeof Provider, K]
     }
     return [hook, getContext] as [typeof hook, typeof getContext]
 }
