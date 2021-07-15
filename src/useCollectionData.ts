@@ -11,7 +11,7 @@ export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
 
 export const useCollectionData = <T extends { id: string }>(ref: string, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
-  const transporter = useLiveQueryContext().transporter
+  const { transporter } = useLiveQueryContext()
 
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
 
