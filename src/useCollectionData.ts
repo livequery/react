@@ -5,16 +5,14 @@ import { useObservable } from "./useObservable"
 import { QueryOption } from "../../types/build"
 
 export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
-  lazy: boolean,
+  lazy?: boolean,
   filters: Partial<QueryOption<T>>;
 }
 
 export const useCollectionData = <T extends { id: string }>(ref: string, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
   const { transporter } = useLiveQueryContext()
-
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
-
   const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false })
 
   useEffect(() => {
