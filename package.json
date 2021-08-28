@@ -3,7 +3,7 @@
     "repository": {
         "url": "https://github.com/livequery/react"
     },
-    "version": "1.0.25",
+    "version": "1.0.26",
     "description": "",
     "main": "build/index.js",
     "types": "build/index.d.ts",
@@ -11,12 +11,11 @@
         "build/**/*"
     ],
     "dependencies": {
-        "@livequery/client": "^1.0.15",
-        "react": "^17.0.2",
-        "rxjs": "^7.1.0"
+        "@livequery/client": "^1.0.22"
     },
     "devDependencies": {
-        "@livequery/types": "^1.0.24",
+        "react": "^17.0.2",
+        "@livequery/types": "^1.0.29",
         "@types/react": "^17.0.11"
     },
     "peerDependencies": {
