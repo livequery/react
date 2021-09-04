@@ -9,6 +9,10 @@ export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
   filters: Partial<QueryOption<T>>;
 }
 
+function assert<T extends Function>(fn: T, thiss: any) {
+  return (fn || (() => { })).bind(thiss) as T
+}
+
 export const useCollectionData = <T extends { id: string }>(ref: string, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
   const { transporter } = useLiveQueryContext()
@@ -26,12 +30,12 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     has_more,
     empty: !error && Object.keys(items).length == 0 && !loading,
     filters: (options || {}) as typeof options,
-    add: client?.add.bind(client) as typeof client.add,
-    fetch_more: client?.fetch_more.bind(client) as typeof client.fetch_more,
-    filter: client?.filter.bind(client) as typeof client.filter,
-    reload: client?.reload.bind(client) as typeof client.reload,
-    reset: client?.reset.bind(client) as typeof client.reset,
-    trigger: client?.trigger.bind(client) as typeof client.trigger,
-    update: client?.update.bind(client) as typeof client.update,
+    add: assert(client?.add, client),
+    fetch_more: assert(client?.fetch_more, client),
+    filter: assert(client?.filter, client),
+    reload: assert(client?.reload, client),
+    reset: assert(client?.reset, client),
+    trigger: assert(client?.trigger, client),
+    update: assert(client?.update, client),
   }
 }
