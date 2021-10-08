@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
-import { CollectionObservable, CollectionOption } from '@livequery/client'
 import { useObservable } from "./useObservable"
 import { QueryOption } from "../../types/build"
+import { CollectionObservable, CollectionOption } from "@livequery/client"
 
 export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
   lazy?: boolean,
