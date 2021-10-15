@@ -28,7 +28,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string, collect
     loading,
     error,
     has_more,
-    empty: !error && Object.keys(items).length == 0 && !loading,
+    empty: ref && !error && Object.keys(items).length == 0 && !loading,
     filters: (options || {}) as typeof options,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
