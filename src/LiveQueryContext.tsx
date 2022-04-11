@@ -8,4 +8,4 @@ export type LiveQueryContextOption = {
 }
 
 
-export const [useLiveQuery, useLiveQueryContext, LiveQueryContextProvider] = createContextFromHook((props: LiveQueryContextOption) => props)
+export const [useLiveQueryContext, LiveQueryContextProvider] = createContextFromHook((props: LiveQueryContextOption) => props)
