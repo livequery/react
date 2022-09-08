@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
 import { useObservable } from "./useObservable"
-import { QueryOption } from "../../types/build"
+import { QueryOption } from "@livequery/types"
 import { CollectionObservable, CollectionOption } from "@livequery/client"
 
 export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
@@ -13,7 +13,7 @@ function assert<T extends Function>(fn: T, thiss: any) {
   return (fn || (() => { })).bind(thiss) as T
 }
 
-export const useCollectionData = <T extends { id: string }>(ref: string, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
+export const useCollectionData = <T extends { id: string }>(ref: string | undefined | '' | null | 0 | false, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
   const { transporter } = useLiveQueryContext()
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
