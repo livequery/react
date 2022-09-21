@@ -17,7 +17,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
 
   const { transporter } = useLiveQueryContext()
   const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
-  const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false })
+  const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false, loading: collection_options.lazy ? false : true })
 
   useEffect(() => {
     ref && !collection_options?.lazy && client.fetch_more()
