@@ -7,6 +7,7 @@ import { CollectionObservable, CollectionOption } from "@livequery/client"
 export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
   lazy?: boolean,
   filters: Partial<QueryOption<T>>;
+  load_all: boolean
 }
 
 function assert<T extends Function>(fn: T, thiss: any) {
@@ -22,6 +23,10 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
   useEffect(() => {
     ref && !collection_options?.lazy && client.fetch_more()
   }, [ref])
+
+  useEffect(() => {
+    collection_options.load_all && !loading && has_more && items.length > 0 && client.fetch_more()
+  }, [loading])
 
   return {
     items,
