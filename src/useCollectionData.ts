@@ -42,6 +42,6 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
     reset: assert(client?.reset, client),
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
-    $changes: client.$changes
+    $changes: client?.$changes 
   }
 }
