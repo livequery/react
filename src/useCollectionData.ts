@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
 import { useObservable } from "./useObservable"
-import { QueryOption } from "@livequery/types"
+import { LivequeryBaseEntity, QueryOption } from "@livequery/types"
 import { CollectionObservable, CollectionOption } from "@livequery/client"
 
-export type useCollectionDataOptions<T = any> = CollectionOption<T> & {
+export type useCollectionDataOptions<T extends LivequeryBaseEntity =  LivequeryBaseEntity> = CollectionOption<T> & {
   lazy?: boolean,
   filters: Partial<QueryOption<T>>;
   load_all: boolean

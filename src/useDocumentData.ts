@@ -1,8 +1,9 @@
 
 import { CollectionOption } from "@livequery/client"
 import { useCollectionData } from "./useCollectionData"
+import { LivequeryBaseEntity } from "@livequery/types"
 
-export type useDocumentDataOptions<T = any> = Omit<CollectionOption<T>, 'filters'> & {
+export type useDocumentDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = Omit<CollectionOption<T>, 'filters'> & {
     lazy?: boolean
 }
 

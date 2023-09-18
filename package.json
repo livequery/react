@@ -3,7 +3,8 @@
     "repository": {
         "url": "https://github.com/livequery/react"
     },
-    "version": "1.0.37",
+    "type": "module",
+    "version": "1.0.82",
     "description": "",
     "main": "build/index.js",
     "types": "build/index.d.ts",
