@@ -1,3 +1,4 @@
+"use client"
 
 import { CollectionOption } from "@livequery/client"
 import { useCollectionData } from "./useCollectionData"

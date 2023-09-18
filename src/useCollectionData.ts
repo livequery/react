@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
 import { useObservable } from "./useObservable"

@@ -1,3 +1,5 @@
+"use client"
+
 
 import { Transporter } from '@livequery/types'
 import { createContextFromHook } from './hooks/createContextFromHook'
