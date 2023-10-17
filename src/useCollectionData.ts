@@ -3,9 +3,8 @@
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
 import { useObservable } from "./useObservable"
-import { LivequeryBaseEntity, QueryOption, Transporter } from "@livequery/types"
-import { CollectionObservable, CollectionOption, SmartQueryItem } from "@livequery/client"
-import { Subject } from 'rxjs'
+import { LivequeryBaseEntity, QueryOption } from "@livequery/types"
+import { CollectionObservable, CollectionOption } from "@livequery/client"
 
 export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = CollectionOption<T> & {
   lazy?: boolean,
@@ -21,18 +20,28 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
   const { transporter } = useLiveQueryContext();
   const client = useMemo(() => new CollectionObservable(ref, { transporter, ...collection_options }), [ref]);
   const stream = useObservable(client, { options: {}, items: [], has_more: false, loading: false, error: undefined });
-  const { loading, has_more, items } = stream;
+  const { loading, has_more, items, error } = stream;
   useEffect(() => {
     try {
       ref && !collection_options?.lazy && client?.fetch_more();
-    }
-    catch (e) {
+    } catch (e) {
     }
   }, [ref]);
+
   useEffect(() => {
     collection_options.load_all && !loading && has_more && items.length > 0 && client?.fetch_more();
   }, [loading]);
-  return Object.assign(client, stream, {
-    empty: ref && !stream.error && stream.items.length == 0 && !stream.loading
-  })
+
+  return {
+    ...stream,
+    empty: ref && !error && items.length == 0 && loading === false,
+    add: assert(client?.add, client),
+    fetch_more: assert(client?.fetch_more, client),
+    filter: assert(client?.filter, client),
+    reload: assert(client?.reload, client),
+    reset: assert(client?.reset, client),
+    trigger: assert(client?.trigger, client),
+    update: assert(client?.update, client),
+    $changes: client?.$changes
+  }
 }

@@ -11,7 +11,7 @@ export const useObservable = <T>(o: Observable<T> | null, default_value: T) => {
 
     useEffect(() => {
         if (o) {
-            const subcription = o.subscribe(d => ss(d))
+            const subcription = o.subscribe(d => ss({ ...d }))
             return () => {
                 subcription.unsubscribe()
             }
