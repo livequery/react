@@ -34,7 +34,9 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
 
   return {
     ...stream,
-    empty: ref && !error && items.length == 0 && loading === false,
+    filters: stream.options,
+    loading: !!stream.loading,
+    empty: !!(ref && !error && items.length == 0 && loading === false),
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
     filter: assert(client?.filter, client),
