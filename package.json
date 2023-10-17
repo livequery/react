@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "1.0.85",
+    "version": "1.0.86",
     "description": "",
     "main": "build/index.js",
     "types": "build/index.d.ts",
@@ -15,9 +15,9 @@
         "@livequery/client": "^1.0.53"
     },
     "devDependencies": {
-        "react": "^17.0.2",
-        "@livequery/types": "^1.0.34",
-        "@types/react": "^17.0.11"
+        "@livequery/types": "^1.0.82",
+        "@types/react": "^17.0.11",
+        "react": "^17.0.2"
     },
     "peerDependencies": {
         "react": "^17.0.2"
@@ -28,5 +28,13 @@
         "deploy": "yarn build; git add .; git commit -m \"Update\"; git push origin master; npm publish --access public"
     },
     "author": "",
-    "license": "ISC"
+    "license": "ISC",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./build/src/index.d.ts",
+                "default": "./build/src/index.js"
+            }
+        }
+    }
 }

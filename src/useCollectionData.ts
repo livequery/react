@@ -3,31 +3,35 @@
 import { useEffect, useMemo } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext"
 import { useObservable } from "./useObservable"
-import { LivequeryBaseEntity, QueryOption } from "@livequery/types"
-import { CollectionObservable, CollectionOption } from "@livequery/client"
+import { LivequeryBaseEntity, QueryOption, Transporter } from "@livequery/types"
+import { CollectionObservable, CollectionOption, SmartQueryItem } from "@livequery/client"
+import { Subject } from 'rxjs'
 
-export type useCollectionDataOptions<T extends LivequeryBaseEntity =  LivequeryBaseEntity> = CollectionOption<T> & {
+export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = CollectionOption<T> & {
   lazy?: boolean,
   filters: Partial<QueryOption<T>>;
   load_all: boolean
 }
 
-function assert<T extends Function>(fn: T, thiss: any) {
+function assert<T extends Function>(fn: T | undefined, thiss: any) {
   return (fn || (() => { })).bind(thiss) as T
 }
 
 export const useCollectionData = <T extends { id: string }>(ref: string | undefined | '' | null | 0 | false, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
-
-  const { transporter } = useLiveQueryContext()
-  const client = useMemo(() => ref && new CollectionObservable<T>(ref, { transporter, ...collection_options }), [ref])
-  const { loading, has_more, error, items, options } = useObservable(client, { options: {}, items: [], has_more: false, loading: collection_options.lazy ? false : true })
-
+  const lqct = useLiveQueryContext()
+  const transporter = lqct as any 
+  const client = useMemo(() => ref ? new CollectionObservable<T>(ref, { transporter, ...collection_options }) : null, [ref])
+  const data = useObservable(client) || { options: {}, items: [] as SmartQueryItem<T>[], has_more: false, loading: false, error: null }
+  const { loading, has_more, error, items, options } = data
   useEffect(() => {
-    ref && !collection_options?.lazy && client.fetch_more()
+    try {
+      ref && !collection_options?.lazy && client?.fetch_more()
+    } catch (e) {
+    }
   }, [ref])
 
   useEffect(() => {
-    collection_options.load_all && !loading && has_more && items.length > 0 && client.fetch_more()
+    // collection_options.load_all && !loading && has_more && items.length > 0 && client.fetch_more()
   }, [loading])
 
   return {
@@ -35,15 +39,18 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
     loading,
     error,
     has_more,
-    empty: ref && !error && Object.keys(items).length == 0 && loading === false,
+    empty: ref && !error && items.length == 0 && loading === false,
     filters: (options || {}) as typeof options,
+
     add: assert(client?.add, client),
-    fetch_more: assert(client?.fetch_more, client),
+    fetch_more: () => {
+      alert('Fetch more')
+    },
     filter: assert(client?.filter, client),
     reload: assert(client?.reload, client),
     reset: assert(client?.reset, client),
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
-    $changes: client?.$changes 
+    $changes: client?.$changes || new Subject()
   }
 }

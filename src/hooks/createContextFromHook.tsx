@@ -3,7 +3,7 @@
 import React, { PropsWithChildren } from 'react'
 import { createContext, useContext } from "react"
 
-export const createContextFromHook = <T, K>(fn: (props?: T) => K) => {
+export const createContextFromHook = <T, K>(fn: ((props: T) => K) | (() => K)) => {
 
     const context = createContext<K>({} as K)
     const getContext = () => useContext(context)

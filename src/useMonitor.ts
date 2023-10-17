@@ -6,7 +6,7 @@ import { useState } from "react"
 type PromiseType<T> = T extends PromiseLike<infer U> ? U : T
 
 export const useMonitor = <T extends (...args: any) => any>(fn: T) => {
-    const [{ error, data, loading }, update] = useState<{ error?: any, data?: PromiseType<ReturnType<T>>, loading?: boolean }>({})
+    const [{ error, data, loading }, update] = useState<{ error?: any, data?: PromiseType<ReturnType<T>> | null , loading?: boolean }>({})
 
     const excute = (async (...args: any[]) => {
         update({ data: null, loading: true, error: null })
