@@ -18,10 +18,10 @@ function assert<T extends Function>(fn: T | undefined, thiss: any) {
 }
 
 export const useCollectionData = <T extends { id: string }>(ref: string | undefined | '' | null | 0 | false, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
-  const lqct = useLiveQueryContext()
-  const transporter = lqct as any 
+  const { transporter } = useLiveQueryContext()
   const client = useMemo(() => ref ? new CollectionObservable<T>(ref, { transporter, ...collection_options }) : null, [ref])
-  const data = useObservable(client) || { options: {}, items: [] as SmartQueryItem<T>[], has_more: false, loading: false, error: null }
+  const data = useObservable(client) || { options: {}, items: [] as SmartQueryItem<T>[], has_more: false, loading: false, error: undefined }
+  
   const { loading, has_more, error, items, options } = data
   useEffect(() => {
     try {
@@ -31,7 +31,7 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
   }, [ref])
 
   useEffect(() => {
-    // collection_options.load_all && !loading && has_more && items.length > 0 && client.fetch_more()
+    collection_options.load_all && !loading && has_more && items.length > 0 && client?.fetch_more()
   }, [loading])
 
   return {

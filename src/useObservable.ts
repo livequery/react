@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { Observable } from 'rxjs'
 
-export const useObservable = <T>(o: Observable<T> | null, default_value?: T) => {
+export const useObservable = <T>(o: Observable<T> | null) => {
 
 
     const [s, ss] = useState<T>()
@@ -19,5 +19,5 @@ export const useObservable = <T>(o: Observable<T> | null, default_value?: T) => 
 
     }, [o])
 
-    return s || default_value
+    return s
 }
