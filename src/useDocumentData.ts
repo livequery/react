@@ -8,7 +8,7 @@ export type useDocumentDataOptions<T extends LivequeryBaseEntity = LivequeryBase
     lazy?: boolean
 }
 
-export const useDocumentData = <T extends { id: string }>(ref: string | undefined | '' | null | 0 | false, options?: useDocumentDataOptions) => {
+export const useDocumentData = <T extends { id: string }>(ref: string | undefined | '' | null | false, options?: useDocumentDataOptions) => {
 
     const { items, loading, error, reload, $changes } = useCollectionData<T>(ref, options)
 
