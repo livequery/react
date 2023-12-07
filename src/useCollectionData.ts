@@ -19,7 +19,13 @@ function assert<T extends Function>(fn: T | undefined, thiss: any) {
 export const useCollectionData = <T extends { id: string }>(ref: string | undefined | '' | null | false, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
   const { transporter } = useLiveQueryContext();
   const client = useMemo(() => new CollectionObservable(ref, { transporter, ...collection_options }), [ref]);
-  const stream = useObservable(client, { options: {}, items: [], has_more: false, loading: false, error: undefined });
+  const stream = useObservable(client, {
+    options: {},
+    items: [],
+    has_more: false,
+    loading: collection_options.lazy ? false : true,
+    error: undefined
+  });
   const { loading, has_more, items, error } = stream;
   useEffect(() => {
     try {
@@ -32,11 +38,13 @@ export const useCollectionData = <T extends { id: string }>(ref: string | undefi
     collection_options.load_all && !loading && has_more && items.length > 0 && client?.fetch_more();
   }, [loading]);
 
+  const empty = !!(ref && !error && items.length == 0 && !loading)
+
   return {
     ...stream,
     filters: stream.options,
     loading: !!stream.loading,
-    empty: !!(ref && !error && items.length == 0 && loading === false),
+    empty,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
     filter: assert(client?.filter, client),
