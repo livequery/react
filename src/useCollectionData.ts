@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useMemo } from "react"
-import { useLiveQueryContext } from "./LiveQueryContext"
-import { useObservable } from "./useObservable"
+import { useLiveQueryContext } from "./LiveQueryContext.js"
+import { useObservable } from "./useObservable.js"
 import { LivequeryBaseEntity, QueryOption } from "@livequery/types"
 import { CollectionObservable, CollectionOption } from "@livequery/client"
 

@@ -2,7 +2,7 @@
 
 
 import { Transporter } from '@livequery/types'
-import { createContextFromHook } from './hooks/createContextFromHook'
+import { createContextFromHook } from './hooks/createContextFromHook.js'
 
 
 export type LiveQueryContextOption = {
