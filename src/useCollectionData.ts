@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext.js"
-import { useObservable } from "./useObservable.js"
-import { LivequeryBaseEntity, QueryOption } from "@livequery/types"
+import { LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
 import { Subject } from 'rxjs'
 
@@ -28,50 +27,52 @@ export type CollectionRef = string | undefined | '' | null | false
 
 export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
-
-  if (typeof window == 'undefined') {
+  if (typeof window == 'undefined' || !ref) {
     return {
+      error: undefined,
       $changes: new Subject(),
-      add: (() => { }) as any,
+      add: (() => { }),
       empty: false,
-      filter: (() => { }) as any,
-      fetch_more: (() => { }) as any,
+      filter: (() => { }),
+      fetch_more: (() => { }),
       filters: {},
       has_more: false,
       items: [],
-      reload: (() => { }) as any,
-      reset: (() => { }) as any,
-      trigger: (() => { }) as any,
-      update: (() => { }) as any,
+      reload: (() => { }),
+      reset: (() => { }),
+      trigger: (() => { }),
+      update: (() => { }),
       loading: false
-    } as CollectionData<T>
+    };
   }
-
   const { transporter } = useLiveQueryContext();
-  const client = useMemo(() => new CollectionObservable(ref, { transporter, ...collection_options }), [ref]);
-  const stream = useObservable(client, {
+
+  const [stream, ss] = useState<CollectionStream<T>>({
     filters: {},
     items: [],
     has_more: false,
     loading: collection_options.lazy ? false : true,
     error: undefined
-  });
-  const { loading, has_more, items, error } = stream;
-  useEffect(() => {
-    try {
-      ref && !collection_options?.lazy && client?.fetch_more();
-    } catch (e) {
-    }
-  }, [ref]);
+  })
+
+  const collection_ref = useRef<CollectionObservable<T>>()
+
 
   useEffect(() => {
-    collection_options.load_all && !loading && has_more && items.length > 0 && client?.fetch_more();
-  }, [loading]);
+    const collection = collection_ref.current = new CollectionObservable(ref, { transporter, ...collection_options })
+    const subscription = collection.subscribe(data => {
+      collection_options.load_all && data.loading == false && data.has_more && collection?.fetch_more()
+      ss(data)
+    })
+    !collection_options?.lazy && collection?.fetch_more()
+    return () => subscription.unsubscribe()
+  }, [ref])
 
-  const empty = !!(ref && !error && items.length == 0 && !loading)
-
+  const client = collection_ref.current
+  const empty = !!(stream.loading && stream.items.length == 0)
   const result: CollectionData<T> = {
     ...stream,
+    error: stream.error,
     loading: !!stream.loading,
     empty,
     add: assert(client?.add, client),
@@ -81,8 +82,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     reset: assert(client?.reset, client),
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
-    $changes: client?.$changes
-  }
-
-  return result
+    $changes: client?.$changes || new Subject<UpdatedData<T>>()
+  };
+  return result;
 }
