@@ -27,24 +27,7 @@ export type CollectionRef = string | undefined | '' | null | false
 
 export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
-  if (typeof window == 'undefined' || !ref) {
-    return {
-      error: undefined,
-      $changes: new Subject(),
-      add: (() => { }),
-      empty: false,
-      filter: (() => { }),
-      fetch_more: (() => { }),
-      filters: {},
-      has_more: false,
-      items: [],
-      reload: (() => { }),
-      reset: (() => { }),
-      trigger: (() => { }),
-      update: (() => { }),
-      loading: false
-    };
-  }
+  
   const { transporter } = useLiveQueryContext();
 
   const [stream, ss] = useState<CollectionStream<T>>({
@@ -59,6 +42,8 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
 
   useEffect(() => {
+    if (!ref || typeof window == 'undefined') return
+    
     const collection = collection_ref.current = new CollectionObservable(ref, { transporter, ...collection_options })
     const subscription = collection.subscribe(data => {
       collection_options.load_all && data.loading == false && data.has_more && collection?.fetch_more()
