@@ -57,7 +57,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
   }, [ref])
 
   const client = collection_ref.current
-  const empty = !!(stream.loading && stream.items.length == 0)
+  const empty = !stream.loading && stream.items.length == 0
   const result: CollectionData<T> = {
     ...stream,
     error: stream.error,
