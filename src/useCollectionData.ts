@@ -34,7 +34,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     filters: {},
     items: [],
     has_more: false,
-    loading: collection_options.lazy ? false : true,
+    loading: collection_options.lazy ? false : !!ref,
     error: undefined
   })
 
