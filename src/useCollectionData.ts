@@ -54,10 +54,10 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     })
     !collection_options?.lazy && collection?.fetch_more()
     return () => subscription.unsubscribe()
-  }, [ref])
+  }, [ref, collection_options?.lazy])
 
   const client = collection_ref.current
-  const empty = !stream.loading && stream.items.length == 0
+  const empty = n > 0 && !stream.loading && stream.items.length == 0
   const result: CollectionData<T> = {
     ...stream,
     error: stream.error,
