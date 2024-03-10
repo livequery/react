@@ -16,7 +16,7 @@ export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBa
 export type CollectionData<T extends LivequeryBaseEntity> = (
   CollectionStream<T>
   & Pick<CollectionObservable<T>, 'add' | 'fetch_more' | 'filter' | 'reload' | 'reset' | 'trigger' | 'update' | '$changes'>
-  & { empty: boolean }
+  & { empty: boolean, loaded: boolean }
 )
 
 function assert<T extends Function>(fn: T | undefined, thiss: any) {
@@ -57,7 +57,8 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
   }, [ref, collection_options?.lazy])
 
   const client = collection_ref.current
-  const empty = n > 0 && !stream.loading && stream.items.length == 0
+  const loaded = n > 0
+  const empty = loaded && !stream.loading && stream.items.length == 0
   const result: CollectionData<T> = {
     ...stream,
     error: stream.error,
@@ -70,7 +71,8 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     reset: assert(client?.reset, client),
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
-    $changes: client?.$changes || new Subject<UpdatedData<T>>()
+    $changes: client?.$changes || new Subject<UpdatedData<T>>(),
+    loaded
   };
   return result;
 }
