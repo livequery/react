@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "1.0.105",
+    "version": "1.0.106",
     "description": "",
     "main": "build/index.js",
     "types": "build/index.d.ts",

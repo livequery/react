@@ -30,6 +30,8 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
   const { transporter } = useLiveQueryContext();
 
+  const [n, sn] = useState(0)
+
   const [stream, ss] = useState<CollectionStream<T>>({
     filters: {},
     items: [],
@@ -38,7 +40,6 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     error: undefined
   })
 
-  const [n, sn] = useState(0)
 
   const collection_ref = useRef<CollectionObservable<T>>()
 
@@ -59,10 +60,11 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
   const client = collection_ref.current
   const loaded = n > 0
   const empty = loaded && !stream.loading && stream.items.length == 0
+
   const result: CollectionData<T> = {
     ...stream,
     error: stream.error,
-    loading: !!stream.loading,
+    loading: !!stream.loading || (!collection_options?.lazy && !!ref && !loaded),
     empty,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
@@ -73,6 +75,8 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     update: assert(client?.update, client),
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
     loaded
-  };
+  }
+
+
   return result;
 }
