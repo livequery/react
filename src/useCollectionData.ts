@@ -30,41 +30,41 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
   const { transporter } = useLiveQueryContext();
 
-  const [n, sn] = useState(0)
 
-  const [stream, ss] = useState<CollectionStream<T>>({
+  const [stream, ss] = useState<CollectionStream<T> & { loaded: boolean }>({
     filters: {},
     items: [],
     has_more: false,
     loading: collection_options.lazy ? false : !!ref,
-    error: undefined
+    error: undefined,
+    loaded: false
   })
 
+  const n = useRef<number>(0)
 
   const collection_ref = useRef<CollectionObservable<T>>()
 
 
   useEffect(() => {
     if (!ref || typeof window == 'undefined') return
-
     const collection = collection_ref.current = new CollectionObservable(ref, { transporter, ...collection_options })
+    n.current = 0
     const subscription = collection.subscribe(data => {
       collection_options.load_all && data.loading == false && data.has_more && collection?.fetch_more()
-      ss(data)
-      sn(Math.random())
+      n.current++
+      ss({ ...data, loaded: true })
     })
     !collection_options?.lazy && collection?.fetch_more()
     return () => subscription.unsubscribe()
   }, [ref, collection_options?.lazy])
 
   const client = collection_ref.current
-  const loaded = n > 0
-  const empty = loaded && !stream.loading && stream.items.length == 0
+  const empty = stream.loaded && !stream.loading && stream.items.length == 0
 
   const result: CollectionData<T> = {
     ...stream,
     error: stream.error,
-    loading: !!stream.loading || (!collection_options?.lazy && !!ref && !loaded),
+    loading: !!stream.loading || (!collection_options?.lazy && !!ref && n.current == 0),
     empty,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
@@ -74,7 +74,6 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
-    loaded
   }
 
 
