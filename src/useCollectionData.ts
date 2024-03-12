@@ -46,7 +46,6 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     n: 0
   })
 
-  const DEBUG = (ref as string)?.includes('webhooks')
 
   const client = useSyncMemo(() => {
 
