@@ -43,7 +43,8 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     has_more: false,
     items: [],
     loaded: false,
-    n: 0
+    n: 0,
+    loading: lazy ? false : !!ref
   })
 
 
