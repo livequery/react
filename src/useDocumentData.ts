@@ -10,13 +10,12 @@ export type useDocumentDataOptions<T extends LivequeryBaseEntity = LivequeryBase
 
 export const useDocumentData = <T extends { id: string }>(ref: string | undefined | '' | null | false, options?: useDocumentDataOptions) => {
 
-    const { items, loading, error, reload, $changes } = useCollectionData<T>(ref, options)
+    const { items, loading, error, $changes } = useCollectionData<T>(ref, options)
 
     return {
         item: items[0],
         loading,
-        error,
-        reload,
+        error, 
         $changes
     }
 

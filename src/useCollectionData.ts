@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext.js"
-import { LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
+import { DocumentResponse, LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
 import { Subject } from 'rxjs'
+import { useSyncMemo } from "./hooks/useSyncMemo.js"
 
 
 export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = CollectionOption<T> & {
@@ -25,41 +26,51 @@ function assert<T extends Function>(fn: T | undefined, thiss: any) {
 
 export type CollectionRef = string | undefined | '' | null | false
 
-export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
+export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> & { vkl?: any } = {}) => {
 
 
   const { transporter } = useLiveQueryContext();
 
+  const n = useRef(0)
 
-  const [stream, ss] = useState<CollectionStream<T> & { loaded: boolean }>({
+  const lazy = collection_options.lazy
+
+
+
+
+  const [stream, set_stream] = useState<CollectionStream<T> & { loaded: boolean, n: number }>({
     filters: {},
-    items: [],
     has_more: false,
-    loading: collection_options.lazy ? false : !!ref,
-    error: undefined,
-    loaded: false
+    items: [],
+    loaded: false,
+    n: 0
   })
 
-  const n = useRef<number>(0)
+  const DEBUG = (ref as string)?.includes('webhooks')
 
-  const collection_ref = useRef<CollectionObservable<T>>()
+  const client = useSyncMemo(() => {
 
-
-  useEffect(() => {
-    if (!ref || typeof window == 'undefined') return
-    const collection = collection_ref.current = new CollectionObservable(ref, { transporter, ...collection_options })
+    const client = new CollectionObservable(ref, { transporter, ...collection_options })
     n.current = 0
-    const subscription = collection.subscribe(data => {
-      collection_options.load_all && data.loading == false && data.has_more && collection?.fetch_more()
-      n.current++
-      ss({ ...data, loaded: true })
-    })
-    !collection_options?.lazy && collection?.fetch_more()
-    return () => subscription.unsubscribe()
-  }, [ref, collection_options?.lazy])
 
-  const client = collection_ref.current
-  const empty = stream.loaded && !stream.loading && stream.items.length == 0
+    const subscription = client.subscribe(data => {
+      if (collection_options.load_all && data.has_more) {
+        client.fetch_more()
+      } else {
+        n.current++
+        set_stream({ ...data, loaded: true, n: n.current })
+      }
+    });
+    if (!lazy) {
+      client.fetch_more()
+    }
+
+    return [client, () => subscription.unsubscribe()]
+
+  }, [ref])
+
+
+  const empty = !client.value.loading && client.value.items.length == 0 && stream.loaded
 
   const result: CollectionData<T> = {
     ...stream,
@@ -76,6 +87,6 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
   }
 
+  return result
 
-  return result;
 }
