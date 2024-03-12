@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext.js"
 import { DocumentResponse, LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
-import { Subject } from 'rxjs'
+import { Subject, skip } from 'rxjs'
 import { useSyncMemo } from "./hooks/useSyncMemo.js"
 
 
@@ -35,18 +35,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
   const lazy = collection_options.lazy
 
-
-
-
-  const [stream, set_stream] = useState<CollectionStream<T> & { loaded: boolean, n: number }>({
-    filters: {},
-    has_more: false,
-    items: [],
-    loaded: false,
-    n: 0,
-    loading: lazy ? false : !!ref
-  })
-
+  const [version, set_version] = useState(0)
 
   const client = useSyncMemo(() => {
 
@@ -58,7 +47,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
         client.fetch_more()
       } else {
         n.current++
-        set_stream({ ...data, loaded: true, n: n.current })
+        set_version(Math.random())
       }
     });
     if (!lazy) {
@@ -70,12 +59,12 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
   }, [ref])
 
 
-  const empty = !client.value.loading && client.value.items.length == 0 && stream.loaded
+  const loaded = n.current > 0
+  const empty = loaded && !client.value.loading && client.value.items.length == 0;
 
   const result: CollectionData<T> = {
-    ...stream,
-    error: stream.error,
-    loading: !!stream.loading || (!collection_options?.lazy && !!ref && n.current == 0),
+    ...client.value,
+    loaded,
     empty,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
