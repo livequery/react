@@ -14,17 +14,18 @@ export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBa
   load_all: boolean
 }
 
+export type CollectionRef = string | undefined | '' | null | false
+
 export type CollectionData<T extends LivequeryBaseEntity> = (
   CollectionStream<T>
   & Pick<CollectionObservable<T>, 'add' | 'fetch_more' | 'filter' | 'reload' | 'reset' | 'trigger' | 'update' | '$changes'>
-  & { empty: boolean, loaded: boolean }
+  & { empty: boolean, loaded: boolean, ref: CollectionRef }
 )
 
 function assert<T extends Function>(fn: T | undefined, thiss: any) {
   return (fn || (() => { })).bind(thiss) as T
 }
 
-export type CollectionRef = string | undefined | '' | null | false
 
 export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> & { vkl?: any } = {}) => {
 
@@ -74,6 +75,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
+    ref
   }
 
   return result
