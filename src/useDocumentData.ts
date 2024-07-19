@@ -1,16 +1,13 @@
 "use client"
 
-import { CollectionOption } from "@livequery/client"
-import { useCollectionData } from "./useCollectionData.js"
+import { useCollectionData, useCollectionDataOptions } from "./useCollectionData.js"
 import { LivequeryBaseEntity } from "@livequery/types"
 
-export type useDocumentDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = Omit<CollectionOption<T>, 'filters'> & {
-    lazy?: boolean
-}
+export type useDocumentDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = Partial<Omit<useCollectionDataOptions<T>, 'filters'>> 
 
-export const useDocumentData = <T extends { id: string }>(ref: string | undefined | '' | null | false, options?: useDocumentDataOptions) => {
+export const useDocumentData = <T extends LivequeryBaseEntity>(ref: string | undefined | '' | null | false, config: useDocumentDataOptions<T> = {}) => {
 
-    const { items, loading, error, $changes } = useCollectionData<T>(ref, options)
+    const { items, loading, error, $changes } = useCollectionData<T>(ref, config)
 
     return {
         item: items[0],

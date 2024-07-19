@@ -1,16 +1,16 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext.js"
-import { DocumentResponse, LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
+import { LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
-import { Subject, skip } from 'rxjs'
+import { Subject } from 'rxjs'
 import { useSyncMemo } from "./hooks/useSyncMemo.js"
 
 
 export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = CollectionOption<T> & {
   lazy?: boolean,
-  filters: Partial<QueryOption<T>>;
+  options: Partial<QueryOption<T>>;
   load_all: boolean
 }
 
@@ -18,8 +18,13 @@ export type CollectionRef = string | undefined | '' | null | false
 
 export type CollectionData<T extends LivequeryBaseEntity> = (
   CollectionStream<T>
-  & Pick<CollectionObservable<T>, 'add' | 'fetch_more' | 'filter' | 'reload' | 'reset' | 'trigger' | 'update' | '$changes'>
-  & { empty: boolean, loaded: boolean, ref: CollectionRef }
+  & Pick<CollectionObservable<T>, 'add' | 'fetch_more' | 'fetch_prev' | 'reset' | 'trigger' | 'update' | '$changes' | 'filter'>
+  & {
+    empty: boolean,
+    loaded: boolean,
+    ref: CollectionRef,
+    filters: CollectionStream<T>['options']
+  }
 )
 
 function assert<T extends Function>(fn: T | undefined, thiss: any) {
@@ -27,7 +32,7 @@ function assert<T extends Function>(fn: T | undefined, thiss: any) {
 }
 
 
-export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> & { vkl?: any } = {}) => {
+export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
 
   const { transporter } = useLiveQueryContext();
@@ -36,7 +41,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
   const lazy = collection_options.lazy
 
-  const [version, set_version] = useState(0)
+  const [, set_version] = useState(0)
 
   const client = useSyncMemo(() => {
 
@@ -44,7 +49,7 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     n.current = 0
 
     const subscription = client.subscribe(data => {
-      if (collection_options.load_all && data.has_more) {
+      if (collection_options.load_all && data.paging.has?.next) {
         client.fetch_more()
       } else {
         n.current++
@@ -61,16 +66,19 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
 
   const loaded = n.current > 0
-  const empty = loaded && !client.value.loading && client.value.items.length == 0;
+  const $ = client.$.getValue()
+  const empty = loaded && !$.loading && $.items.length == 0;
 
   const result: CollectionData<T> = {
-    ...client.value,
+    ...$,
     loaded,
     empty,
+    filters: $.options,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
+    fetch_prev: assert(client?.fetch_prev, client),
     filter: assert(client?.filter, client),
-    reload: assert(client?.reload, client),
+    // fetch_around_cursor: assert(client?.fetch_around_cursor, client),
     reset: assert(client?.reset, client),
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),

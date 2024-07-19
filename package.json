@@ -17,7 +17,8 @@
     "devDependencies": {
         "@livequery/types": "^1.0.82",
         "@types/react": "^17.0.11",
-        "react": "^17.0.2"
+        "react": "^17.0.2",
+        "typescript": "5.5.2"
     },
     "peerDependencies": {
         "react": "^18.0.0"
