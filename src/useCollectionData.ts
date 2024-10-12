@@ -1,10 +1,10 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext.js"
 import { LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
-import { Subject } from 'rxjs'
+import { merge, Subject } from 'rxjs'
 import { useSyncMemo } from "./hooks/useSyncMemo.js"
 
 
@@ -44,26 +44,26 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
   const [, set_version] = useState(0)
 
   const client = useSyncMemo(() => {
-
+    n.current = 0 
     const client = new CollectionObservable(ref, { transporter, ...collection_options })
-    n.current = 0
+    const a = client.$changes.subscribe(changes => {
+      n.current++
+    })
 
     const subscription = client.subscribe(data => {
-      if (collection_options.load_all && data.paging.has?.next) {
+      if (!lazy && collection_options.load_all && data.paging.has?.next) {
         client.fetch_more()
       } else {
-        n.current++
         set_version(Math.random())
       }
     });
-    if (!lazy) {
-      client.fetch_more()
-    }
 
-    return [client, () => subscription.unsubscribe()]
+    return [client, () => {
+      subscription.unsubscribe()
+      a.unsubscribe()
+    }]
 
   }, [ref])
-
 
   const loaded = n.current > 0
   const $ = client.$.getValue()
@@ -85,6 +85,10 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
     ref
   }
+
+  useEffect(() => {
+    !lazy && !loaded && client.fetch_more()
+  }, [lazy])
 
   return result
 
