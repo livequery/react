@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.6",
+    "version": "2.0.7",
     "description": "",
     "main": "build/index.js",
     "types": "build/index.d.ts",
@@ -12,17 +12,16 @@
         "build/**/*"
     ],
     "dependencies": {
-        "@livequery/client": "^2.0.0",
+        "@livequery/client": "^2.0.7",
         "rxjs": "^7.8.1"
     },
     "devDependencies": {
-        "@livequery/types": "^2.0.0",
+        "@livequery/types": "^2.0.7",
         "@types/react": "^17.0.11",
-        "react": "^17.0.2",
-        "typescript": "5.5.2"
+        "typescript": "5.6.3"
     },
     "peerDependencies": {
-        "react": "^18.0.0"
+        "react": "^18.3.1"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
