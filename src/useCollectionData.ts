@@ -1,11 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useLiveQueryContext } from "./LiveQueryContext.js"
 import { LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
-import { merge, Subject } from 'rxjs'
-import { useSyncMemo } from "./hooks/useSyncMemo.js"
+import { Subject } from 'rxjs'
 
 
 export type useCollectionDataOptions<T extends LivequeryBaseEntity = LivequeryBaseEntity> = CollectionOption<T> & {
@@ -21,7 +20,6 @@ export type CollectionData<T extends LivequeryBaseEntity> = (
   & Pick<CollectionObservable<T>, 'add' | 'fetch_more' | 'fetch_prev' | 'reset' | 'trigger' | 'update' | '$changes' | 'filter'>
   & {
     empty: boolean,
-    loaded: boolean,
     ref: CollectionRef,
     filters: CollectionStream<T>['options']
   }
@@ -37,58 +35,48 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
   const { transporter } = useLiveQueryContext();
 
-  const n = useRef(0)
 
-  const lazy = collection_options.lazy
+  const client = useMemo(() => new CollectionObservable(ref, { transporter, ...collection_options }), [ref])
 
-  const [, set_version] = useState(0)
+  const [$, set_$] = useState<CollectionStream<T>>(client.getValue())
 
-  const client = useSyncMemo(() => {
-    n.current = 0 
-    const client = new CollectionObservable(ref, { transporter, ...collection_options })
-    const a = client.$changes.subscribe(changes => {
-      n.current++
-    })
+  const [state, set_state] = useState(0)
 
-    const subscription = client.subscribe(data => {
-      if (!lazy && collection_options.load_all && data.paging.has?.next) {
+  // Sync stream effect
+  useEffect(() => {
+    if (collection_options.lazy) return
+    client.fetch_more()
+    const s = client.subscribe(data => {
+      if (collection_options.load_all && data.paging.has?.next) {
         client.fetch_more()
       } else {
-        set_version(Math.random())
+        set_$(data)
+        set_state(Date.now())
       }
-    });
+    })
+    return () => {
+      s.unsubscribe()
+    }
+  }, [client, set_$, collection_options.lazy, set_state])
 
-    return [client, () => {
-      subscription.unsubscribe()
-      a.unsubscribe()
-    }]
+  const empty = !!(!$.loading && $.items.length == 0)
 
-  }, [ref])
 
-  const loaded = n.current > 0
-  const $ = client.$.getValue()
-  const empty = loaded && !$.loading && $.items.length == 0;
-
-  const result: CollectionData<T> = {
+  const result: CollectionData<T> & { state: number } = {
     ...$,
-    loaded,
+    state,
     empty,
     filters: $.options,
     add: assert(client?.add, client),
     fetch_more: assert(client?.fetch_more, client),
     fetch_prev: assert(client?.fetch_prev, client),
     filter: assert(client?.filter, client),
-    // fetch_around_cursor: assert(client?.fetch_around_cursor, client),
     reset: assert(client?.reset, client),
     trigger: assert(client?.trigger, client),
     update: assert(client?.update, client),
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
     ref
   }
-
-  useEffect(() => {
-    !lazy && !loaded && client.fetch_more()
-  }, [lazy])
 
   return result
 
