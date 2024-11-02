@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useLiveQueryContext } from "./LiveQueryContext.js"
+import { useLivequeryContext } from "./LiveQueryContext.js"
 import { LivequeryBaseEntity, QueryOption, UpdatedData } from "@livequery/types"
 import { CollectionObservable, CollectionOption, CollectionStream } from "@livequery/client"
 import { Subject } from 'rxjs'
@@ -32,11 +32,14 @@ function assert<T extends Function>(fn: T | undefined, thiss: any) {
 
 export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
+  const { transporter} = useLivequeryContext()
+  if (!transporter) throw 'MISSING_LIVEQUERY_TRANSPORTER'
 
-  const { transporter } = useLiveQueryContext();
-
-
-  const client = useMemo(() => new CollectionObservable(ref, { transporter, ...collection_options }), [ref])
+  const client = useMemo(() => new CollectionObservable(ref, {
+    ...collection_options,
+    transporter
+  }
+  ), [ref])
 
   const [$, set_$] = useState<CollectionStream<T>>(client.getValue())
 
