@@ -24,13 +24,19 @@ export function mergeTransporterHooks(...hooks: TransporterHook[]) {
 const LivequeryContext = createContext<LivequeryContext>({})
 
 
-export const useLivequeryContext = () => useContext(LivequeryContext)
+export const useLivequeryContext = () => {
+  const ctx = useContext(LivequeryContext)
+  if (!ctx.transporter) throw 'MISSING_LIVEQUERY_TRANSPORTER'
+  return {
+    transporter: ctx.transporter 
+  }
+}
 
 
 
 export const LiveQueryContextProvider = (props: PropsWithChildren<LivequeryContext>) => {
 
-  const ctx = useLivequeryContext()
+  const ctx = useContext(LivequeryContext)
   const merged = mergeTransporterHooks(...props.hooks || [])
   const transporter = ctx.transporter ? ctx.transporter.hook(merged) : props.transporter?.hook(merged)
 

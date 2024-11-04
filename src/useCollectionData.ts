@@ -35,7 +35,6 @@ export const CollectionMap = new Map<string, CollectionData<any>>()
 export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
   const { transporter } = useLivequeryContext()
-  if (!transporter) throw 'MISSING_LIVEQUERY_TRANSPORTER'
 
   const client = useMemo(() => new CollectionObservable(ref, {
     ...collection_options,
