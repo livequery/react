@@ -29,10 +29,12 @@ function assert<T extends Function>(fn: T | undefined, thiss: any) {
   return (fn || (() => { })).bind(thiss) as T
 }
 
+export const CollectionMap = new Map<string, CollectionData<any>>()
+
 
 export const useCollectionData = <T extends LivequeryBaseEntity>(ref: CollectionRef, collection_options: Partial<useCollectionDataOptions<T>> = {}) => {
 
-  const { transporter} = useLivequeryContext()
+  const { transporter } = useLivequeryContext()
   if (!transporter) throw 'MISSING_LIVEQUERY_TRANSPORTER'
 
   const client = useMemo(() => new CollectionObservable(ref, {
@@ -80,6 +82,11 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
     $changes: client?.$changes || new Subject<UpdatedData<T>>(),
     ref
   }
+
+  useEffect(() => {
+    ref && CollectionMap.set(ref, result as any as CollectionData<any>)
+    return () => { ref && CollectionMap.delete(ref) }
+  }, [client])
 
   return result
 
