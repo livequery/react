@@ -26,9 +26,9 @@ const LivequeryContext = createContext<LivequeryContext>({})
 
 export const useLivequeryContext = () => {
   const ctx = useContext(LivequeryContext)
-  if (!ctx.transporter) throw 'MISSING_LIVEQUERY_TRANSPORTER'
+  if (!ctx.transporter && typeof window != 'undefined') throw 'MISSING_LIVEQUERY_TRANSPORTER'
   return {
-    transporter: ctx.transporter 
+    transporter: ctx.transporter as any as Transporter
   }
 }
 
