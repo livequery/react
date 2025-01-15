@@ -65,9 +65,11 @@ export const useCollectionData = <T extends LivequeryBaseEntity>(ref: Collection
 
   const empty = !!(!$.loading && $.items.length == 0)
 
+  const loading = $.n == 0 && !collection_options.lazy ? 'both' : $.loading
 
   const result: CollectionData<T> & { state: number } = {
     ...$,
+    loading,
     state,
     empty,
     filters: $.options,

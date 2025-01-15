@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.23",
+    "version": "2.0.30",
     "description": "",
     "main": "build/index.js",
     "types": "build/index.d.ts",
@@ -12,7 +12,7 @@
         "build/**/*"
     ],
     "dependencies": {
-        "@livequery/client": "^2.0.22",
+        "@livequery/client": "^2.0.30",
         "rxjs": "^7.8.1"
     },
     "devDependencies": {
