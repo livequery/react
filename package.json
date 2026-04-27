@@ -4,38 +4,38 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.30",
+    "version": "2.0.92",
     "description": "",
-    "main": "build/index.js",
-    "types": "build/index.d.ts",
-    "files": [
-        "build/**/*"
-    ],
-    "dependencies": {
-        "@livequery/client": "^2.0.30",
-        "rxjs": "^7.8.1"
-    },
-    "devDependencies": {
-        "@livequery/types": "^2.0.22",
-        "@types/react": "^17.0.11",
-        "typescript": "5.6.3"
-    },
-    "peerDependencies": {
-        "react": "^18.3.1"
-    },
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "rm -rf build; tsc -b .",
-        "deploy": "yarn build; git add .; git commit -m \"Update\"; git push origin master; npm publish --access public"
-    },
-    "author": "",
-    "license": "ISC",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "import": {
-                "types": "./build/index.d.ts",
-                "default": "./build/index.js"
-            }
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
         }
-    }
+    },
+    "files": [
+        "dist/**/*"
+    ],
+    "dependencies": {
+        "@livequery/core": "^2.0.92",
+        "rxjs": "^7.8.2"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.14"
+    },
+    "peerDependencies": {
+        "react": "^19.2.5"
+    },
+    "scripts": {
+        "clean": "rm -rf dist",
+        "build:js": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap",
+        "build:types": "bunx tsc -p tsconfig.build.json",
+        "build": "bun run clean && bun run build:js && bun run build:types",
+        "build:watch": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --watch",
+        "prepublishOnly": "bun run build"
+    },
+    "author": "",
+    "license": "ISC"
 }
