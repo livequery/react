@@ -1,0 +1,12 @@
+[install]
+# Bun install config (default)
+
+[define]
+# Bun define config (default)
+
+[alias]
+# Example: uncomment and edit below to use @ as alias for ./src
+# "@/*" = "./src/*"
+
+# For this repo, enable @/ as alias for ./src
+"@/*" = "./src/*"

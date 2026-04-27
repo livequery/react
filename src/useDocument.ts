@@ -1,7 +1,7 @@
 import { LivequeryCollection, type Doc } from "@livequery/core"
 import { useMemo, useEffect } from "react"
-import { useLivequeryCore } from "./useCollection"
-import { useObservable } from "./useObservable"
+import { useLivequeryCore } from "./useCollection.js"
+import { useObservable } from "./useObservable.js"
 
 /**
  * Subscribes to a single document path and returns the first emitted item with loading state.

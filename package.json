@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.93",
+    "version": "2.0.95",
     "description": "",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -30,11 +30,12 @@
     },
     "scripts": {
         "clean": "rm -rf dist",
-        "build:js": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external",
+        "build:js": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external --production",
+        "build:js:prod": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external --production",
         "build:types": "bunx tsc -p tsconfig.build.json",
         "build": "bun run clean && bun run build:js && bun run build:types",
-        "build:watch": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --watch --packages=external",
-        "prepublishOnly": "bun run build"
+        "build:prod": "bun run clean && bun run build:js:prod && bun run build:types",
+        "build:watch": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external --watch"
     },
     "author": "",
     "license": "ISC"
