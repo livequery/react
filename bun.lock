@@ -5,7 +5,7 @@
     "": {
       "name": "@livequery/react",
       "dependencies": {
-        "@livequery/core": "^2.0.92",
+        "@livequery/core": "^2.0.96",
         "rxjs": "^7.8.2",
       },
       "devDependencies": {
@@ -17,7 +17,7 @@
     },
   },
   "packages": {
-    "@livequery/core": ["@livequery/core@2.0.92", "", { "dependencies": { "rxjs": "^7.8.2", "uuidv7": "^1.2.1" } }, "sha512-ml7rz3m607DG5uTaVlAcUbFsodvc9roxRYNNVpANBFn+E/aXjn8ezHLyQgnPZwtJrhA178XsNy4aLOr3kHMH0Q=="],
+    "@livequery/core": ["@livequery/core@2.0.96", "", { "dependencies": { "rxjs": "^7.8.2", "uuidv7": "^1.2.1" } }, "sha512-MdKsz9xaJ+h8EkOGufWzkpWCoDQ4f5GPBxAERCbN66subOsvRxLmprNWNFBNrHMF07/eVFqJX6CK8P63wJI0cA=="],
 
     "@types/react": ["@types/react@19.2.14", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w=="],
 

@@ -1,15 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "Preserve",
-    "moduleResolution": "bundler",
     "noEmit": false,
-    "emitDeclarationOnly": true,
     "declaration": true,
     "declarationMap": true,
+    "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"] 
 }

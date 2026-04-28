@@ -3,15 +3,13 @@
     // Environment setup & latest features
     "lib": ["ESNext", "DOM", "WebWorker"],
     "target": "ESNext",
-    "module": "Preserve",
+    "module": "NodeNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
 
-    // Bundler mode
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": true,
+    // Node.js ESM
+    "moduleResolution": "NodeNext",
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
@@ -27,5 +25,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "exclude": ["dist", "node_modules"]
 }

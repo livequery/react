@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.95",
+    "version": "2.0.96",
     "description": "",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -13,13 +13,43 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "default": "./dist/index.js"
+        },
+        "./createContextFromHook": {
+            "types": "./dist/createContextFromHook.d.ts",
+            "import": "./dist/createContextFromHook.js",
+            "default": "./dist/createContextFromHook.js"
+        },
+        "./LivequeryCoreContext": {
+            "types": "./dist/LivequeryCoreContext.d.ts",
+            "import": "./dist/LivequeryCoreContext.js",
+            "default": "./dist/LivequeryCoreContext.js"
+        },
+        "./useAction": {
+            "types": "./dist/useAction.d.ts",
+            "import": "./dist/useAction.js",
+            "default": "./dist/useAction.js"
+        },
+        "./useCollection": {
+            "types": "./dist/useCollection.d.ts",
+            "import": "./dist/useCollection.js",
+            "default": "./dist/useCollection.js"
+        },
+        "./useDocument": {
+            "types": "./dist/useDocument.d.ts",
+            "import": "./dist/useDocument.js",
+            "default": "./dist/useDocument.js"
+        },
+        "./useObservable": {
+            "types": "./dist/useObservable.d.ts",
+            "import": "./dist/useObservable.js",
+            "default": "./dist/useObservable.js"
         }
     },
     "files": [
         "dist/**/*"
     ],
     "dependencies": {
-        "@livequery/core": "^2.0.92",
+        "@livequery/core": "^2.0.96",
         "rxjs": "^7.8.2"
     },
     "devDependencies": {
@@ -30,12 +60,10 @@
     },
     "scripts": {
         "clean": "rm -rf dist",
-        "build:js": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external --production",
-        "build:js:prod": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external --production",
         "build:types": "bunx tsc -p tsconfig.build.json",
-        "build": "bun run clean && bun run build:js && bun run build:types",
-        "build:prod": "bun run clean && bun run build:js:prod && bun run build:types",
-        "build:watch": "bun build ./src/index.ts --outdir ./dist --target browser --format esm --sourcemap --packages=external --watch"
+        "build": "bun run clean && bun run build:types",
+        "build:prod": "bun run build",
+        "build:watch": "bunx tsc -p tsconfig.build.json --watch"
     },
     "author": "",
     "license": "ISC"
