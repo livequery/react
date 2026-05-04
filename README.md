@@ -2,7 +2,18 @@
 
 Thin React bindings for `@livequery/core`.
 
+This repository is the React bindings library package, not an application. Changes here should preserve reusable hook behavior unless a task explicitly targets a breaking change.
+
 This package provides a small set of hooks and helpers for wiring a `LivequeryCore` instance into a React app, subscribing to RxJS streams, and reading collection or document state from `@livequery/core`.
+
+## AI Agent Guidance
+
+Repository-specific agent guidance lives in `AGENTS.md` and `copilot-instructions.md`.
+
+- `AGENTS.md` is the implementation-focused guide for coding agents modifying this package.
+- `copilot-instructions.md` provides repo-level instructions for Copilot when generating or reviewing code in this workspace.
+- Both documents assume this repo is a React bindings library package, so agent changes should avoid app-specific scaffolding and should preserve public API compatibility by default.
+- Agents generating consumer code should create one shared `LivequeryCore`, provide it through `LivequeryCoreProvider`, and subscribe to collection state with `useObservable()`.
 
 ## Install
 
