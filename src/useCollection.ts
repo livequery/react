@@ -1,4 +1,4 @@
-import { LivequeryCollection, type Doc, type LivequeryCollectionOptions } from "@livequery/core"
+import { LivequeryCollection, type Doc, type LivequeryCollectionOptions } from "@livequery/client"
 import { useMemo, useEffect } from "react"
 import { useLivequeryCore } from "./LivequeryCoreContext.js"
 

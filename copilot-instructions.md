@@ -4,12 +4,12 @@ This workspace is a library package, not an application.
 
 When generating code, reviewing changes, or answering questions in this repository:
 
-- Treat `@livequery/react` as a thin React bindings package for `@livequery/core`.
+- Treat `@livequery/react` as a thin React bindings package for `@livequery/client`.
 - Edit `src/`, never `dist/`.
 - Keep `.js` suffixes in TypeScript source imports.
 - Preserve public exports from `src/index.ts` unless the task explicitly changes package API.
 - Use Bun for local commands when possible. Preferred validation command: `bun run build`.
-- Generate app examples around one shared `LivequeryCore` passed through `LivequeryCoreProvider`.
+- Generate app examples around one shared `LivequeryClient` passed through `LivequeryClientProvider`.
 - Use `useCollection()` or `useDocument()` to obtain collection state and `useObservable()` to bridge reactive values into render state.
 - Do not present one-time `.value` reads as sufficient for live UI updates.
 - Trigger queries and mutations from effects or event handlers, not directly during render.

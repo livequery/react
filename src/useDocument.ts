@@ -1,4 +1,4 @@
-import { type Doc } from "@livequery/core"
+import { type Doc } from "@livequery/client"
 import { useObservable } from "./useObservable.js"
 import { useCollection } from "./useCollection.js"
 

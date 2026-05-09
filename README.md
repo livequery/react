@@ -1,10 +1,10 @@
 # @livequery/react
 
-Thin React bindings for `@livequery/core`.
+Thin React bindings for `@livequery/client`.
 
 This repository is the React bindings library package, not an application. Changes here should preserve reusable hook behavior unless a task explicitly targets a breaking change.
 
-This package provides a small set of hooks and helpers for wiring a `LivequeryCore` instance into a React app, subscribing to RxJS streams, and reading collection or document state from `@livequery/core`.
+This package provides a small set of hooks and helpers for wiring a `LivequeryClient` instance into a React app, subscribing to RxJS streams, and reading collection or document state from `@livequery/client`.
 
 ## AI Agent Guidance
 
@@ -13,24 +13,24 @@ Repository-specific agent guidance lives in `AGENTS.md` and `copilot-instruction
 - `AGENTS.md` is the implementation-focused guide for coding agents modifying this package.
 - `copilot-instructions.md` provides repo-level instructions for Copilot when generating or reviewing code in this workspace.
 - Both documents assume this repo is a React bindings library package, so agent changes should avoid app-specific scaffolding and should preserve public API compatibility by default.
-- Agents generating consumer code should create one shared `LivequeryCore`, provide it through `LivequeryCoreProvider`, and subscribe to collection state with `useObservable()`.
+- Agents generating consumer code should create one shared `LivequeryClient`, provide it through `LivequeryClientProvider`, and subscribe to collection state with `useObservable()`.
 
 ## Install
 
 ```bash
-bun add @livequery/react @livequery/core react rxjs
+bun add @livequery/react @livequery/client react rxjs
 ```
 
 Or with npm:
 
 ```bash
-npm install @livequery/react @livequery/core react rxjs
+npm install @livequery/react @livequery/client react rxjs
 ```
 
 ## Exports
 
-- `LivequeryCoreProvider`
-- `useLivequeryCore`
+- `LivequeryClientProvider`
+- `useLivequeryClient`
 - `useCollection`
 - `useDocument`
 - `useObservable`
@@ -39,21 +39,21 @@ npm install @livequery/react @livequery/core react rxjs
 
 ## Core setup
 
-`useCollection` and `useDocument` read the active `LivequeryCore` instance from `LivequeryCoreProvider`.
+`useCollection` and `useDocument` read the active `LivequeryClient` instance from `LivequeryClientProvider`.
 
 ```tsx
-import { LivequeryCore } from '@livequery/core'
-import { LivequeryCoreProvider } from '@livequery/react'
+import { LivequeryClient } from '@livequery/client'
+import { LivequeryClientProvider } from '@livequery/react'
 
-const core = new LivequeryCore({
+const core = new LivequeryClient({
   endpoint: 'https://your-livequery-server'
 })
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <LivequeryCoreProvider core={core}>
+    <LivequeryClientProvider core={core}>
       {children}
-    </LivequeryCoreProvider>
+    </LivequeryClientProvider>
   )
 }
 ```
@@ -140,12 +140,12 @@ You can also pass a function when the observable should be resolved lazily.
 `useGlobalValue` stores a lazily created singleton on `globalThis`. This is useful when an app should reuse one object across renders or across multiple React roots in the same runtime.
 
 ```tsx
-import { LivequeryCore } from '@livequery/core'
+import { LivequeryClient } from '@livequery/client'
 import { useGlobalValue } from '@livequery/react'
 
 export function useAppCore() {
   return useGlobalValue('livequery-core', () => {
-    return new LivequeryCore({
+    return new LivequeryClient({
       endpoint: 'https://your-livequery-server'
     })
   })
@@ -180,7 +180,7 @@ Compared to creating context by hand, `createContextFromHook` removes the repeti
 
 It is especially useful when you want an API that reads like a hook-based service locator, but stays explicit through React providers.
 
-The `LivequeryCoreProvider` and `useLivequeryCore` pair in this package is built from this helper.
+The `LivequeryClientProvider` and `useLivequeryClient` pair in this package is built from this helper.
 
 ### Mental model
 
@@ -224,7 +224,7 @@ This is why the consumer side feels like a plain hook even though the data flow 
 
 ### Good use cases
 
-- exposing a configured client instance such as `LivequeryCore`
+- exposing a configured client instance such as `LivequeryClient`
 - deriving session or auth state from provider props
 - wrapping feature-specific state that should be consumed through a single custom hook
 - hiding context implementation details from package consumers
