@@ -69,7 +69,7 @@ Avoid these common mistakes in generated code:
 ## Important Constraints
 
 - This package assumes React usage around `@livequery/client`; do not move transport or storage responsibilities here.
-- `useCollection()` depends on a `LivequeryClientProvider` ancestor providing a core instance.
+- `useCollection()` depends on a `LivequeryClientProvider` ancestor providing a client instance.
 - `useObservable()` treats `BehaviorSubject` specially by reading its initial value through `getValue()`.
 - Generated UI code should preserve optimistic metadata from `@livequery/client` when pending or error state matters.
 

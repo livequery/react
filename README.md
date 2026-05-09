@@ -45,13 +45,13 @@ npm install @livequery/react @livequery/client react rxjs
 import { LivequeryClient } from '@livequery/client'
 import { LivequeryClientProvider } from '@livequery/react'
 
-const core = new LivequeryClient({
+const client = new LivequeryClient({
   endpoint: 'https://your-livequery-server'
 })
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <LivequeryClientProvider core={core}>
+    <LivequeryClientProvider client={client}>
       {children}
     </LivequeryClientProvider>
   )
@@ -143,8 +143,8 @@ You can also pass a function when the observable should be resolved lazily.
 import { LivequeryClient } from '@livequery/client'
 import { useGlobalValue } from '@livequery/react'
 
-export function useAppCore() {
-  return useGlobalValue('livequery-core', () => {
+export function useAppClient() {
+  return useGlobalValue('livequery-client', () => {
     return new LivequeryClient({
       endpoint: 'https://your-livequery-server'
     })

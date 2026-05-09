@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.105",
+    "version": "2.0.106",
     "description": "",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -19,10 +19,10 @@
             "import": "./dist/createContextFromHook.js",
             "default": "./dist/createContextFromHook.js"
         },
-        "./LivequeryCoreContext": {
-            "types": "./dist/LivequeryCoreContext.d.ts",
-            "import": "./dist/LivequeryCoreContext.js",
-            "default": "./dist/LivequeryCoreContext.js"
+        "./LivequeryClientContext": {
+            "types": "./dist/LivequeryClientContext.d.ts",
+            "import": "./dist/LivequeryClientContext.js",
+            "default": "./dist/LivequeryClientContext.js"
         },
         "./useAction": {
             "types": "./dist/useAction.d.ts",
@@ -47,12 +47,12 @@
     },
     "files": [
         "dist/**/*"
-    ], 
+    ],
     "devDependencies": {
         "@types/react": "^19.2.14"
     },
     "peerDependencies": {
-        "@livequery/client": "^2.0.105",
+        "@livequery/client": "^2.0.106",
         "rxjs": "^7.8.2",
         "react": "^19.2.5"
     },

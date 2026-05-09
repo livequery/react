@@ -8,14 +8,14 @@
         "@types/react": "^19.2.14",
       },
       "peerDependencies": {
-        "@livequery/client": "^2.0.105",
+        "@livequery/client": "^2.0.106",
         "react": "^19.2.5",
         "rxjs": "^7.8.2",
       },
     },
   },
   "packages": {
-    "@livequery/client": ["@livequery/client@2.0.105", "", { "dependencies": { "rxjs": "^7.8.2", "uuidv7": "^1.2.1" } }, "sha512-99E3aq9BskEn7yX3Xl/Y/xU2IL74gjPIKhFPhzbSDpJI6Yp8WBBPDBBV4CbJDAFLyOwEQJhatK4i+ZPZ0WdeSA=="],
+    "@livequery/client": ["@livequery/client@2.0.106", "", { "dependencies": { "rxjs": "^7.8.2", "uuidv7": "^1.2.1" } }, "sha512-Y/MQggjw4vVCqwdqt6Krx8n4p7krSLWuR/0bGro49koq2VMsXO804qKesqIS242sLBjkxdZJv1xHPWL8QzqJ6g=="],
 
     "@types/react": ["@types/react@19.2.14", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w=="],
 
