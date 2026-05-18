@@ -4,7 +4,7 @@
         "url": "https://github.com/livequery/react"
     },
     "type": "module",
-    "version": "2.0.128",
+    "version": "2.0.133",
     "description": "",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -52,7 +52,7 @@
         "@types/react": "^19.2.14"
     },
     "peerDependencies": {
-        "@livequery/client": "^2.0.128",
+        "@livequery/client": "^2.0.133",
         "rxjs": "^7.8.2",
         "react": "^19.2.5"
     },

@@ -12,15 +12,15 @@ export function useObservable<T>(o: ObservableSource<T>, default_value: T): T
 
 export function useObservable<T>(o: MaybeFunction<T>, default_value?: T) {
     const prev = useRef(o)
-    const $ = o as any as BehaviorSubject<T> || EMPTY
-    const isBehaviorSubject =typeof o == 'object' &&  typeof $.getValue === 'function'
-    const dfv = isBehaviorSubject ? $.getValue() : default_value
+    const source = o as any as BehaviorSubject<T> || EMPTY
+    const isBehaviorSubject =typeof o == 'object' &&  typeof source.getValue === 'function'
+    const dfv = isBehaviorSubject ? source.getValue() : default_value
     const [v, s] = useState<T | undefined>(dfv)
     useEffect(() => {
         const diff = prev.current !== o
         prev.current = o
         try {
-            const subscription = $.pipe(
+            const subscription = source.pipe(
                 skip(isBehaviorSubject && !diff ? 1 : 0),
                 tap(s)
             ).subscribe()
