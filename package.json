@@ -1,68 +1,68 @@
 {
-    "name": "@livequery/react",
-    "repository": {
-        "url": "https://github.com/livequery/react"
+  "name": "@livequery/react",
+  "repository": {
+    "url": "https://github.com/livequery/react"
+  },
+  "type": "module",
+  "version": "2.0.134",
+  "description": "",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
-    "type": "module",
-    "version": "2.0.133",
-    "description": "",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "default": "./dist/index.js"
-        },
-        "./createContextFromHook": {
-            "types": "./dist/createContextFromHook.d.ts",
-            "import": "./dist/createContextFromHook.js",
-            "default": "./dist/createContextFromHook.js"
-        },
-        "./LivequeryClientContext": {
-            "types": "./dist/LivequeryClientContext.d.ts",
-            "import": "./dist/LivequeryClientContext.js",
-            "default": "./dist/LivequeryClientContext.js"
-        },
-        "./useAction": {
-            "types": "./dist/useAction.d.ts",
-            "import": "./dist/useAction.js",
-            "default": "./dist/useAction.js"
-        },
-        "./useCollection": {
-            "types": "./dist/useCollection.d.ts",
-            "import": "./dist/useCollection.js",
-            "default": "./dist/useCollection.js"
-        },
-        "./useDocument": {
-            "types": "./dist/useDocument.d.ts",
-            "import": "./dist/useDocument.js",
-            "default": "./dist/useDocument.js"
-        },
-        "./useObservable": {
-            "types": "./dist/useObservable.d.ts",
-            "import": "./dist/useObservable.js",
-            "default": "./dist/useObservable.js"
-        }
+    "./createContextFromHook": {
+      "types": "./dist/createContextFromHook.d.ts",
+      "import": "./dist/createContextFromHook.js",
+      "default": "./dist/createContextFromHook.js"
     },
-    "files": [
-        "dist/**/*"
-    ],
-    "devDependencies": {
-        "@types/react": "^19.2.14"
+    "./LivequeryClientContext": {
+      "types": "./dist/LivequeryClientContext.d.ts",
+      "import": "./dist/LivequeryClientContext.js",
+      "default": "./dist/LivequeryClientContext.js"
     },
-    "peerDependencies": {
-        "@livequery/client": "^2.0.133",
-        "rxjs": "^7.8.2",
-        "react": "^19.2.5"
+    "./useAction": {
+      "types": "./dist/useAction.d.ts",
+      "import": "./dist/useAction.js",
+      "default": "./dist/useAction.js"
     },
-    "scripts": {
-        "clean": "rm -rf dist",
-        "build:types": "bunx tsc -p tsconfig.build.json",
-        "build": "bun run clean && bun run build:types",
-        "build:prod": "bun run build",
-        "build:watch": "bunx tsc -p tsconfig.build.json --watch"
+    "./useCollection": {
+      "types": "./dist/useCollection.d.ts",
+      "import": "./dist/useCollection.js",
+      "default": "./dist/useCollection.js"
     },
-    "author": "",
-    "license": "ISC"
+    "./useDocument": {
+      "types": "./dist/useDocument.d.ts",
+      "import": "./dist/useDocument.js",
+      "default": "./dist/useDocument.js"
+    },
+    "./useObservable": {
+      "types": "./dist/useObservable.d.ts",
+      "import": "./dist/useObservable.js",
+      "default": "./dist/useObservable.js"
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "devDependencies": {
+    "@types/react": "^19.2.14"
+  },
+  "peerDependencies": {
+    "@livequery/client": "^2.0.134",
+    "rxjs": "^7.8.2",
+    "react": "^19.2.5"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build:types": "bunx tsc -p tsconfig.build.json",
+    "build": "bun run clean && bun run build:types",
+    "build:prod": "bun run build",
+    "build:watch": "bunx tsc -p tsconfig.build.json --watch"
+  },
+  "author": "",
+  "license": "ISC"
 }
