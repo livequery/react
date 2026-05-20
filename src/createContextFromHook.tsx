@@ -5,7 +5,11 @@ export const createContextFromHook = <T, R>(fn: ((props: T) => R) | (() => R)) =
     const ctx = createContext<R | undefined>(undefined)
  
     const useState = () => {
-        return useContext(ctx) as R
+        const value = useContext(ctx)
+        if (value === undefined) {
+            throw new Error('Context provider is missing')
+        }
+        return value
     }
     const Provider = ({ children, ...props }: PropsWithChildren<T>) => {
         const value = fn(props as T)

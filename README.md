@@ -2,18 +2,7 @@
 
 Thin React bindings for `@livequery/client`.
 
-This repository is the React bindings library package, not an application. Changes here should preserve reusable hook behavior unless a task explicitly targets a breaking change.
-
-This package provides a small set of hooks and helpers for wiring a `LivequeryClient` instance into a React app, subscribing to RxJS streams, and reading collection or document state from `@livequery/client`.
-
-## AI Agent Guidance
-
-Repository-specific agent guidance lives in `AGENTS.md` and `copilot-instructions.md`.
-
-- `AGENTS.md` is the implementation-focused guide for coding agents modifying this package.
-- `copilot-instructions.md` provides repo-level instructions for Copilot when generating or reviewing code in this workspace.
-- Both documents assume this repo is a React bindings library package, so agent changes should avoid app-specific scaffolding and should preserve public API compatibility by default.
-- Agents generating consumer code should create one shared `LivequeryClient`, provide it through `LivequeryClientProvider`, and subscribe to collection state with `useObservable()`.
+This package is a small integration layer. It does not implement transport, storage, caching, or query behavior itself. Those responsibilities stay in `@livequery/client`; this package gives React components a clean way to access a shared `LivequeryClient`, create `LivequeryCollection` instances, and mirror RxJS streams into render state.
 
 ## Install
 
@@ -34,12 +23,12 @@ npm install @livequery/react @livequery/client react rxjs
 - `useCollection`
 - `useDocument`
 - `useObservable`
-- `useGlobalValue`
+- `useAction`
 - `createContextFromHook`
 
-## Core setup
+## Recommended App Shape
 
-`useCollection` and `useDocument` read the active `LivequeryClient` instance from `LivequeryClientProvider`.
+Create one `LivequeryClient` for your app or data boundary, provide it once, then use hooks inside descendant components.
 
 ```tsx
 import { LivequeryClient } from '@livequery/client'
@@ -51,18 +40,58 @@ const client = new LivequeryClient({
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <LivequeryClientProvider client={client}>
+    <LivequeryClientProvider core={client}>
       {children}
     </LivequeryClientProvider>
   )
 }
 ```
 
-## useCollection
+Use collection methods from effects or event handlers, not during render. Use `useObservable()` to subscribe to reactive fields before rendering their values.
 
-`useCollection` creates a `LivequeryCollection`, initializes it when `ref` is available, and returns the collection instance.
+## `LivequeryClientProvider`
+
+`LivequeryClientProvider` makes a shared `LivequeryClient` available to `useCollection()` and any component that calls `useLivequeryClient()`.
+
+Use it when:
+
+- an app has one shared Livequery connection
+- a route, workspace, tenant, or feature boundary needs its own client
+- hooks below the boundary should avoid receiving the client as a prop
 
 ```tsx
+<LivequeryClientProvider core={client}>
+  <TodoList />
+</LivequeryClientProvider>
+```
+
+The provider currently expects a `core` prop. Passing `client` will not work unless the implementation is changed.
+
+## `useLivequeryClient`
+
+`useLivequeryClient()` reads the nearest `LivequeryClient` from `LivequeryClientProvider`.
+
+Use it when you need direct access to the shared client, usually for setup code or integration with APIs that are not covered by `useCollection()`.
+
+```tsx
+import { useLivequeryClient } from '@livequery/react'
+
+export function ClientStatus() {
+  const client = useLivequeryClient()
+  return <span>{client ? 'Connected' : 'Missing client'}</span>
+}
+```
+
+The hook must be used under a matching provider. If it is called outside the provider tree, the generated context hook throws `Context provider is missing`.
+
+## `useCollection`
+
+`useCollection<T>(ref, options)` creates one `LivequeryCollection<T>` for the component, initializes it when `ref` is truthy, and returns the collection instance.
+
+Use it when a component needs the full collection API: reactive state plus methods such as querying or mutations.
+
+```tsx
+import { useEffect } from 'react'
 import { useCollection, useObservable } from '@livequery/react'
 
 type Todo = {
@@ -75,8 +104,14 @@ export function TodoList() {
   const collection = useCollection<Todo>('todos', { lazy: false })
   const items = useObservable(collection.items, [])
   const loading = useObservable(collection.loading, false)
+  const error = useObservable(collection.error)
+
+  useEffect(() => {
+    collection.query()
+  }, [collection])
 
   if (loading) return <p>Loading...</p>
+  if (error) return <p>Could not load todos.</p>
 
   return (
     <ul>
@@ -88,15 +123,21 @@ export function TodoList() {
 }
 ```
 
-Notes:
+Behavior notes:
 
-- `ref` can be falsy. In that case initialization is skipped.
+- `ref` may be `undefined`, `null`, `false`, or an empty string. Falsy refs skip initialization.
 - The same hook call keeps one collection instance for the lifetime of the component.
-- To render stream values, subscribe with `useObservable`.
+- `options` are used when that collection instance is first created. Pass stable options, or remount the hook if options need to change.
+- Subscribe to fields such as `collection.items`, `collection.loading`, and `collection.error` with `useObservable()`.
+- Do not call `query()`, `add()`, `update()`, or `delete()` directly during render.
 
-## useDocument
+## `useDocument`
 
-`useDocument` is a small convenience wrapper built on top of `LivequeryCollection`. It initializes a collection for a single document path and returns `[document, loading]`.
+`useDocument<T>(ref, options)` is a document-focused convenience wrapper over `useCollection()`.
+
+It initializes a collection for a document ref, subscribes to collection items and loading state, then returns `[items[0], loading]`.
+
+Use it when a component only needs one document and a loading flag.
 
 ```tsx
 import { useDocument } from '@livequery/react'
@@ -117,9 +158,13 @@ export function TodoDetail({ id }: { id: string }) {
 }
 ```
 
-## useObservable
+Use `useCollection()` instead when you need collection methods, error state, multiple documents, or more control over subscriptions.
 
-`useObservable` bridges an RxJS `Observable` or `BehaviorSubject` into React state.
+## `useObservable`
+
+`useObservable()` bridges an RxJS `Observable` or `BehaviorSubject` into React state.
+
+Use it for any reactive value that should cause a component rerender when it emits.
 
 ```tsx
 import { BehaviorSubject } from 'rxjs'
@@ -133,65 +178,58 @@ export function Counter() {
 }
 ```
 
-You can also pass a function when the observable should be resolved lazily.
-
-## useGlobalValue
-
-`useGlobalValue` stores a lazily created singleton on `globalThis`. This is useful when an app should reuse one object across renders or across multiple React roots in the same runtime.
+Supported shapes:
 
 ```tsx
-import { LivequeryClient } from '@livequery/client'
-import { useGlobalValue } from '@livequery/react'
+const value = useObservable(source$)
+const valueWithDefault = useObservable(source$, defaultValue)
+const lazyValue = useObservable(() => source$)
+```
 
-export function useAppClient() {
-  return useGlobalValue('livequery-client', () => {
-    return new LivequeryClient({
-      endpoint: 'https://your-livequery-server'
-    })
+Behavior notes:
+
+- `BehaviorSubject` is treated specially. Its initial value is read with `getValue()` so the first render can use the current value.
+- Lazy sources are resolved once for the hook lifetime.
+- If the source is `undefined`, the hook returns the default value, or `undefined` if no default was provided.
+- Reading `.value` or `.getValue()` manually in render is not a replacement for `useObservable()` because it will not subscribe the component to future emissions.
+
+## `useAction`
+
+`useAction(fn, options)` wraps an async function and attaches action state to the returned callable.
+
+Use it for button clicks, form submissions, and other event-driven async work where the UI needs `loading`, `data`, or `error`.
+
+```tsx
+import { useAction } from '@livequery/react'
+
+export function SaveButton({ save }: { save: () => Promise<{ id: string }> }) {
+  const saveAction = useAction(save, {
+    onError(error) {
+      console.error(error)
+    }
   })
+
+  return (
+    <button disabled={saveAction.loading} onClick={() => void saveAction()}>
+      {saveAction.loading ? 'Saving...' : 'Save'}
+    </button>
+  )
 }
 ```
 
-## createContextFromHook
+The returned function has these state fields:
 
-`createContextFromHook` is the most distinctive helper in this package. It lets you define shared state once at the provider boundary, but consume it later with an API that still feels like a normal hook.
+- `loading`: `true` while the latest call is pending
+- `data`: resolved data from the latest successful call
+- `error`: normalized `{ code, message }` from the latest failed call
 
-In practice, it turns this idea:
+If multiple calls overlap, only the latest call is allowed to update state. Earlier calls still resolve or reject normally, but they will not overwrite the visible action state after a newer call has started.
 
-- "I have some setup logic that depends on provider props"
-- "I want descendants to read the computed result through a hook"
+## `createContextFromHook`
 
-into a reusable pattern.
+`createContextFromHook(fn)` derives a provider and a consumer hook from one factory function.
 
-The helper takes one function `fn(props) => value` and returns a tuple:
-
-- `useValue`: reads the current context value
-- `Provider`: receives props, calls `fn(props)`, and stores the result in context
-
-That means consumers do not need to know about `React.createContext`, context objects, or provider value wiring. They only call a hook.
-
-### Why this helper is useful
-
-Compared to creating context by hand, `createContextFromHook` removes the repetitive parts:
-
-- creating the context object
-- writing a custom consumer hook
-- writing a provider that computes and passes `value`
-
-It is especially useful when you want an API that reads like a hook-based service locator, but stays explicit through React providers.
-
-The `LivequeryClientProvider` and `useLivequeryClient` pair in this package is built from this helper.
-
-### Mental model
-
-You can think of it as turning a factory into two coordinated pieces:
-
-1. A provider-side adapter: `Provider(props)` computes a value from props.
-2. A consumer-side hook: `useValue()` reads that computed value from the nearest provider.
-
-So instead of manually writing both pieces every time, you derive them from one source function.
-
-### Example
+Use it when a value should be computed at a provider boundary and consumed through a hook.
 
 ```tsx
 import { createContextFromHook } from '@livequery/react'
@@ -214,37 +252,37 @@ function App() {
 }
 ```
 
-### What happens internally
+The helper returns:
 
-The generated provider receives props plus `children`, calls your factory with those props, and pushes the returned value into a private React context.
+- `useValue`: reads the current context value
+- `Provider`: receives props, calls `fn(props)`, and stores the returned value in context
 
-The generated hook simply reads that context and returns the value as type `R`.
+Behavior notes:
 
-This is why the consumer side feels like a plain hook even though the data flow is still standard React context under the hood.
+- The provider calls `fn(props)` on every provider render.
+- `createContextFromHook()` does not memoize the returned value. Memoize inside `fn` or stabilize provider props if recomputation matters.
+- The generated hook throws `Context provider is missing` when consumed outside its provider.
 
-### Good use cases
+`LivequeryClientProvider` and `useLivequeryClient` are built with this helper.
 
-- exposing a configured client instance such as `LivequeryClient`
-- deriving session or auth state from provider props
-- wrapping feature-specific state that should be consumed through a single custom hook
-- hiding context implementation details from package consumers
+## Choosing The Right API
 
-### Important behavior notes
+- Use `LivequeryClientProvider` once near the app or data boundary.
+- Use `useLivequeryClient()` only when you need direct client access.
+- Use `useCollection()` when you need collection methods or multiple reactive collection fields.
+- Use `useDocument()` when you only need the first document and loading state.
+- Use `useObservable()` whenever an RxJS source should drive rendering.
+- Use `useAction()` for async event handlers that need loading, data, and error state.
+- Use `createContextFromHook()` for package or app utilities that should expose provider plus hook pairs.
 
-- The provider recomputes the value on every render because it directly calls `fn(props)`.
-- The consumer hook assumes a provider exists. In the current implementation it casts the context value to `R`, so using the hook outside its provider can result in `undefined` flowing through at runtime.
-- `createContextFromHook` does not add memoization by itself. If `fn(props)` is expensive, memoize inside `fn` or stabilize the incoming props.
+## Common Mistakes
 
-### Relationship to plain context
-
-If you wrote this manually, the shape would be:
-
-1. create a context
-2. write `useX()` that calls `useContext`
-3. write `XProvider` that computes a value from props
-4. pass that value to the provider
-
-`createContextFromHook` compresses those four steps into one helper and keeps the consuming API ergonomic.
+- Creating a new `LivequeryClient` inside a component render.
+- Calling collection mutations directly during render.
+- Reading `BehaviorSubject` values manually and expecting rerenders.
+- Passing changing `useCollection()` options and expecting the existing collection instance to rebuild.
+- Using `useDocument()` when you need error state or collection methods.
+- Importing APIs not listed in the `Exports` section.
 
 ## Build
 
@@ -253,3 +291,19 @@ bun run build
 ```
 
 Build output is published from `dist/` and exposed through the package `exports` field.
+
+## Test
+
+```bash
+bun test
+```
+
+The current test suite covers the React hook behavior that is most sensitive to regressions: observable subscriptions, lazy observable sources, generated context hooks, and async action race handling.
+
+## Agent Guidance
+
+Repository-specific coding-agent guidance lives in `AGENTS.md`, `AGENT_API_GUIDE.md`, and `copilot-instructions.md`.
+
+- `README.md` is end-user documentation.
+- `AGENTS.md` is the implementation-focused entry point for coding agents.
+- `AGENT_API_GUIDE.md` explains how agents should choose and use each public API when generating code or modifying this package.

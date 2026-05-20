@@ -20,7 +20,8 @@ This repository is a library package, not an application. Agents should preserve
 - Edit `src/`, never `dist/`. `dist/` is generated output.
 - Keep ESM-style relative imports with `.js` extensions in source files.
 - Preserve public exports from `src/index.ts` unless the task explicitly changes package API.
-- Validation command: `bun run build`.
+- Validation commands: `bun test` and `bun run build`.
+- Use `AGENT_API_GUIDE.md` for public API usage rules and hook-specific guidance.
 
 ## Project Map
 
@@ -63,8 +64,10 @@ Avoid these common mistakes in generated code:
 
 - `useCollection()` memoizes one `LivequeryCollection` per hook call and re-initializes it when `ref` changes.
 - `useDocument()` returns `[items[0], loading]` from the underlying collection state.
-- `useObservable()` subscribes to an observable source inside an effect and mirrors emissions into React state.
+- `useObservable()` subscribes to an observable source inside an effect and mirrors emissions into React state. `BehaviorSubject` initial values are read with `getValue()`, and lazy source functions are resolved once.
 - `LivequeryClientProvider` is built with `createContextFromHook()` and supplies the active `LivequeryClient` to hooks.
+- `createContextFromHook()` throws `Context provider is missing` when the generated hook is consumed outside its provider.
+- `useAction()` only allows the latest in-flight call to update visible action state.
 
 ## Important Constraints
 
@@ -83,10 +86,12 @@ Avoid these common mistakes in generated code:
 ## Validation
 
 - Preferred build check: `bun run build`.
-- There is no dedicated automated test suite in this package at the moment.
+- Preferred test check: `bun test`.
+- Full workspace typecheck, including tests: `bunx tsc -p tsconfig.json`.
 - If you change hook semantics, re-check `src/useCollection.ts`, `src/useDocument.ts`, and `src/useObservable.ts` together.
 
 ## Documentation Boundary
 
 - `README.md` is end-user documentation.
 - `AGENTS.md` should stay focused on implementation guidance, usage rules for generated code, and editing safety for agents.
+- `AGENT_API_GUIDE.md` is the detailed public API usage guide for agents generating consumer code or modifying hook behavior.

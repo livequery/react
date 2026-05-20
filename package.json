@@ -4,7 +4,7 @@
     "url": "https://github.com/livequery/react"
   },
   "type": "module",
-  "version": "2.0.134",
+  "version": "2.0.135",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -49,18 +49,23 @@
     "dist/**/*"
   ],
   "devDependencies": {
-    "@types/react": "^19.2.14"
+    "@livequery/client": "^2.0.135",
+    "@types/bun": "^1.3.14",
+    "@types/react": "^19.2.14",
+    "@types/react-test-renderer": "^19.1.0",
+    "react-test-renderer": "^19.2.6"
   },
   "peerDependencies": {
-    "@livequery/client": "^2.0.134",
-    "rxjs": "^7.8.2",
-    "react": "^19.2.5"
+    "@livequery/client": "^2.0.135",
+    "react": "^19.2.5",
+    "rxjs": "^7.8.2"
   },
   "scripts": {
     "clean": "rm -rf dist",
     "build:types": "bunx tsc -p tsconfig.build.json",
     "build": "bun run clean && bun run build:types",
     "build:prod": "bun run build",
+    "test": "bun test",
     "build:watch": "bunx tsc -p tsconfig.build.json --watch"
   },
   "author": "",
