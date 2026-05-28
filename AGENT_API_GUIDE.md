@@ -90,14 +90,13 @@ Use when:
 Recommended pattern:
 
 ```tsx
+// lazy: false — collection queries automatically, no useEffect needed
 const collection = useCollection<Todo>('todos', { lazy: false })
 const items = useObservable(collection.items, [])
 const loading = useObservable(collection.loading, false)
-
-useEffect(() => {
-  collection.query()
-}, [collection])
 ```
+
+Use `lazy: true` (the default) only when the query must be triggered manually — for example, after a user action or after async setup completes. In that case call `collection.query()` from an effect or event handler.
 
 Important:
 
@@ -203,7 +202,6 @@ function ListLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
 ### Canonical example
 
 ```tsx
-import { useEffect } from 'react'
 import { BehaviorSubject } from 'rxjs'
 import { useCollection, useObservable } from '@livequery/react'
 
@@ -221,12 +219,9 @@ function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
 }
 
 export function TodoList() {
-  const collection = useCollection<Todo>('todos')
+  // lazy: false — auto-queries on initialization, no manual query() call needed
+  const collection = useCollection<Todo>('todos', { lazy: false })
   const items = useObservable(collection.items, [])
-
-  useEffect(() => {
-    collection.query()
-  }, [collection])
 
   return (
     <>

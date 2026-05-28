@@ -48,9 +48,9 @@ Preferred consumer shape:
 
 1. Create `LivequeryClient` in app setup.
 2. Provide it via `LivequeryClientProvider`.
-3. Call `useCollection()` or `useDocument()` inside components.
+3. Call `useCollection(ref, { lazy: false })` or `useDocument()` inside components.
 4. Subscribe to reactive fields with `useObservable()`.
-5. Trigger queries or mutations from effects or user actions.
+5. With `lazy: false`, the collection queries automatically — no manual `query()` call needed. Use `lazy: true` only when the query must be triggered explicitly.
 
 Avoid these common mistakes in generated code:
 
@@ -98,10 +98,9 @@ function ListLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
 
 ```tsx
 export function TodoList() {
-  const collection = useCollection<Todo>('todos')
+  // lazy: false — auto-queries on initialization, no manual query() call needed
+  const collection = useCollection<Todo>('todos', { lazy: false })
   const items = useObservable(collection.items, [])
-
-  useEffect(() => { collection.query() }, [collection])
 
   return (
     <>

@@ -91,7 +91,6 @@ The hook must be used under a matching provider. If it is called outside the pro
 Use it when a component needs the full collection API: reactive state plus methods such as querying or mutations.
 
 ```tsx
-import { useEffect } from 'react'
 import { useCollection, useObservable } from '@livequery/react'
 
 type Todo = {
@@ -101,14 +100,11 @@ type Todo = {
 }
 
 export function TodoList() {
+  // lazy: false — collection queries automatically on initialization
   const collection = useCollection<Todo>('todos', { lazy: false })
   const items = useObservable(collection.items, [])
   const loading = useObservable(collection.loading, false)
   const error = useObservable(collection.error)
-
-  useEffect(() => {
-    collection.query()
-  }, [collection])
 
   if (loading) return <p>Loading...</p>
   if (error) return <p>Could not load todos.</p>
@@ -122,6 +118,8 @@ export function TodoList() {
   )
 }
 ```
+
+When `lazy: false`, the collection queries automatically when initialized — no `useEffect` or manual `collection.query()` call is needed. Use `lazy: true` (the default) when you need to control when the query fires, such as after user interaction or after other async setup completes.
 
 Behavior notes:
 
@@ -239,7 +237,6 @@ function TodoLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
 ### Full example
 
 ```tsx
-import { useEffect } from 'react'
 import { BehaviorSubject } from 'rxjs'
 import { useCollection, useObservable } from '@livequery/react'
 
@@ -257,12 +254,9 @@ function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
 }
 
 export function TodoList() {
-  const collection = useCollection<Todo>('todos')
+  // lazy: false — no need to call collection.query() manually
+  const collection = useCollection<Todo>('todos', { lazy: false })
   const items = useObservable(collection.items, [])
-
-  useEffect(() => {
-    collection.query()
-  }, [collection])
 
   return (
     <>
