@@ -156,6 +156,99 @@ Important:
 
 When modifying this hook, re-run hook tests. Small changes to initial value handling, lazy source resolution, or subscription cleanup can create subtle regressions.
 
+## Collection Rendering Pattern (Mandatory)
+
+`collection.items` is typed as `BehaviorSubject<BehaviorSubject<T>[]>`. This structure drives the correct rendering pattern. Agents must follow all three rules below whenever rendering a `LivequeryCollection`.
+
+### Why the two-level structure exists
+
+- The outer `BehaviorSubject` emits a new array when items are added, removed, or reordered.
+- Each inner `BehaviorSubject<T>` emits independently when that specific item's fields change.
+- A field update on item N emits only item N's subject. The outer array does not change. Without the three-rule pattern, either the list re-renders on every field change, or field changes are missed entirely.
+
+### Rule 1 — Subscribe to the outer subject in the parent
+
+```tsx
+const items = useObservable(collection.items, [])
+// items: BehaviorSubject<T>[]
+// Re-renders only when count or order changes
+```
+
+### Rule 2 — Render each item in a dedicated child component
+
+Pass `BehaviorSubject<T>` as a prop; call `useObservable` inside the child.
+
+```tsx
+function ItemRow({ item$ }: { item$: BehaviorSubject<T> }) {
+  const item = useObservable(item$)
+  // Re-renders only when this item's fields change
+  return <li>{item.title}</li>
+}
+```
+
+Never call `useObservable(item$)` inside the parent map. That would make every field change re-render the entire list.
+
+### Rule 3 — Render loading state in a dedicated child component
+
+`collection.loading` is a `BehaviorSubject<boolean>`. If it is observed in the same component as the items list, toggling loading re-renders the full list unnecessarily.
+
+```tsx
+function ListLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
+  const loading = useObservable(loading$)
+  if (!loading) return null
+  return <p>Loading...</p>
+}
+```
+
+### Canonical example
+
+```tsx
+import { useEffect } from 'react'
+import { BehaviorSubject } from 'rxjs'
+import { useCollection, useObservable } from '@livequery/react'
+
+type Todo = { _id: string; title: string; done: boolean }
+
+function TodoLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
+  const loading = useObservable(loading$)
+  if (!loading) return null
+  return <p>Loading...</p>
+}
+
+function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
+  const item = useObservable(item$)
+  return <li>{item.title}</li>
+}
+
+export function TodoList() {
+  const collection = useCollection<Todo>('todos')
+  const items = useObservable(collection.items, [])
+
+  useEffect(() => {
+    collection.query()
+  }, [collection])
+
+  return (
+    <>
+      <TodoLoading loading$={collection.loading} />
+      <ul>
+        {items.map((item$) => (
+          <TodoItem key={item$.getValue()._id} item$={item$} />
+        ))}
+      </ul>
+    </>
+  )
+}
+```
+
+### Checklist before generating any collection UI
+
+- [ ] `useObservable(collection.items, [])` is called in the parent — not `collection.items.getValue()`
+- [ ] Each item is rendered by a dedicated child component that receives `item$: BehaviorSubject<T>`
+- [ ] That child calls `useObservable(item$)` internally
+- [ ] `collection.loading` is rendered by a dedicated child component
+- [ ] No `useObservable(item$)` calls appear inside the parent's `.map()`
+
 ## `useAction`
 
 Meaning: wraps an async function with React state for `loading`, `data`, and `error`.

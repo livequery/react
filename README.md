@@ -193,6 +193,98 @@ Behavior notes:
 - If the source is `undefined`, the hook returns the default value, or `undefined` if no default was provided.
 - Reading `.value` or `.getValue()` manually in render is not a replacement for `useObservable()` because it will not subscribe the component to future emissions.
 
+## Rendering a Collection (Mandatory Pattern)
+
+`collection.items` is a `BehaviorSubject<BehaviorSubject<T>[]>`. This two-level structure is intentional and must be respected to achieve both realtime updates and high render performance.
+
+**How it works:**
+
+- The outer `BehaviorSubject` emits a new array only when items are added, removed, or reordered.
+- Each element in the array is itself a `BehaviorSubject<T>` that emits whenever that specific item's fields change.
+- A field update on one item emits only that item's inner subject — the outer array does not change and the parent list does not re-render.
+
+This means correct rendering requires three separate component layers:
+
+### Rule 1 — Subscribe to the items array in the parent
+
+```tsx
+const items = useObservable(collection.items, [])
+// items = BehaviorSubject<T>[]
+// Re-renders only when item count or order changes
+```
+
+### Rule 2 — Render each item in its own component
+
+Pass the `BehaviorSubject<T>` as a prop and call `useObservable` inside the child. Field changes re-render only that child.
+
+```tsx
+function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
+  const item = useObservable(item$)
+  return <li>{item.title}</li>
+}
+```
+
+### Rule 3 — Render loading state in its own component
+
+`collection.loading` is also a `BehaviorSubject<boolean>`. Place it in a separate component so toggling loading does not re-render the item list.
+
+```tsx
+function TodoLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
+  const loading = useObservable(loading$)
+  if (!loading) return null
+  return <p>Loading...</p>
+}
+```
+
+### Full example
+
+```tsx
+import { useEffect } from 'react'
+import { BehaviorSubject } from 'rxjs'
+import { useCollection, useObservable } from '@livequery/react'
+
+type Todo = { _id: string; title: string; done: boolean }
+
+function TodoLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
+  const loading = useObservable(loading$)
+  if (!loading) return null
+  return <p>Loading...</p>
+}
+
+function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
+  const item = useObservable(item$)
+  return <li>{item.title}</li>
+}
+
+export function TodoList() {
+  const collection = useCollection<Todo>('todos')
+  const items = useObservable(collection.items, [])
+
+  useEffect(() => {
+    collection.query()
+  }, [collection])
+
+  return (
+    <>
+      <TodoLoading loading$={collection.loading} />
+      <ul>
+        {items.map((item$) => (
+          <TodoItem key={item$.getValue()._id} item$={item$} />
+        ))}
+      </ul>
+    </>
+  )
+}
+```
+
+**Why this matters:**
+
+- Putting `useObservable(collection.loading)` and `useObservable(collection.items)` in the same parent component means every loading toggle re-renders the entire list, even when nothing changed.
+- Calling `useObservable(item$)` inside the parent map instead of a child component means every field change on any single item re-renders the whole list.
+- Following all three rules gives true per-item granularity: only the component that owns a changed field re-renders.
+
+> **Never** flatten `collection.items` by calling `useObservable` on each element inside the parent map. Always delegate to a child component.
+
 ## `useAction`
 
 `useAction(fn, options)` wraps an async function and attaches action state to the returned callable.
@@ -283,6 +375,9 @@ Behavior notes:
 - Passing changing `useCollection()` options and expecting the existing collection instance to rebuild.
 - Using `useDocument()` when you need error state or collection methods.
 - Importing APIs not listed in the `Exports` section.
+- Calling `useObservable(item$)` for each item inside the parent `.map()` instead of delegating to a child component — this causes the entire list to re-render on every field change of any single item.
+- Observing `collection.loading` in the same component as the item list — loading state changes then re-render the full list.
+- Treating `collection.items` as a plain array — it is a `BehaviorSubject<BehaviorSubject<T>[]>` and must be observed at both levels to get correct realtime behavior.
 
 ## Build
 

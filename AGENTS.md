@@ -60,6 +60,64 @@ Avoid these common mistakes in generated code:
 - Do not assume falsy refs initialize a collection.
 - Do not rely on exports that are not present in `src/index.ts`; use the source barrel as the package API source of truth.
 
+## Mandatory Collection Rendering Pattern
+
+`collection.items` is `BehaviorSubject<BehaviorSubject<T>[]>`. This is not a plain array. Agents must follow the three-component pattern below whenever rendering a collection. Violating it either breaks realtime updates or causes the full list to re-render on every field change.
+
+**Rule 1 — Subscribe to the outer subject in the parent:**
+
+```tsx
+const items = useObservable(collection.items, [])
+// items: BehaviorSubject<T>[]  — re-renders only on count or order change
+```
+
+**Rule 2 — Dedicate a child component to each item:**
+
+```tsx
+function ItemRow({ item$ }: { item$: BehaviorSubject<T> }) {
+  const item = useObservable(item$)  // re-renders only when this item's fields change
+  return <li>{item.title}</li>
+}
+```
+
+Never call `useObservable(item$)` inside the parent `.map()`. That collapses both levels into the parent and re-renders the whole list on every field change.
+
+**Rule 3 — Dedicate a child component to loading state:**
+
+```tsx
+function ListLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
+  const loading = useObservable(loading$)
+  if (!loading) return null
+  return <p>Loading...</p>
+}
+```
+
+`collection.loading` is a `BehaviorSubject<boolean>`. Observing it in the same component as the item list means every loading toggle re-renders the full list.
+
+**Canonical shape:**
+
+```tsx
+export function TodoList() {
+  const collection = useCollection<Todo>('todos')
+  const items = useObservable(collection.items, [])
+
+  useEffect(() => { collection.query() }, [collection])
+
+  return (
+    <>
+      <ListLoading loading$={collection.loading} />
+      <ul>
+        {items.map((item$) => (
+          <TodoItem key={item$.getValue()._id} item$={item$} />
+        ))}
+      </ul>
+    </>
+  )
+}
+```
+
+See `AGENT_API_GUIDE.md` for the full checklist and annotated example.
+
 ## Runtime Model
 
 - `useCollection()` memoizes one `LivequeryCollection` per hook call and re-initializes it when `ref` changes.
@@ -82,6 +140,7 @@ Avoid these common mistakes in generated code:
 - `useDocument()` returns the first item in collection state rather than a separate dedicated document object.
 - `useObservable()` uses runtime detection and effect subscriptions; subtle changes can alter rerender behavior.
 - `README.md` can lag behind `src/index.ts`; prefer the source barrel when checking actual exports.
+- `collection.items` is `BehaviorSubject<BehaviorSubject<T>[]>` — the inner subjects are the realtime handles per item. Flattening them without the three-component pattern silently disables per-item reactivity.
 
 ## Validation
 
