@@ -34,8 +34,17 @@ Create one `LivequeryClient` for your app or data boundary, provide it once, the
 import { LivequeryClient } from '@livequery/client'
 import { LivequeryClientProvider } from '@livequery/react'
 
+import { LivequeryClient, LivequeryMemoryStorage } from '@livequery/client'
+import { RestTransporter } from '@livequery/rest'
+
 const client = new LivequeryClient({
-  endpoint: 'https://your-livequery-server'
+  storage: new LivequeryMemoryStorage(),
+  transporters: {
+    rest: new RestTransporter({
+      api: 'https://your-livequery-server',
+      ws: 'wss://your-livequery-server/ws',
+    }),
+  },
 })
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -133,30 +142,39 @@ Behavior notes:
 
 `useDocument<T>(ref, options)` is a document-focused convenience wrapper over `useCollection()`.
 
-It initializes a collection for a document ref, subscribes to collection items and loading state, then returns `[items[0], loading]`.
+It initializes a collection for a document ref, subscribes to collection items, loading state, and error state, then returns `[items[0], loading, error]`.
 
-Use it when a component only needs one document and a loading flag.
+Use it when a component only needs one document, a loading flag, and basic error handling.
 
 ```tsx
 import { useDocument } from '@livequery/react'
 
 type Todo = {
-  _id: string
+  id: string
   title: string
   done: boolean
 }
 
 export function TodoDetail({ id }: { id: string }) {
-  const [todo, loading] = useDocument<Todo>(`todos/${id}`)
+  const [todo, loading, error] = useDocument<Todo>(`todos/${id}`)
 
   if (loading) return <p>Loading...</p>
+  if (error) return <p>Error: {error.message}</p>
   if (!todo) return <p>Not found</p>
 
-  return <h1>{todo.title}</h1>
+  return <h1>{todo.value.title}</h1>
 }
 ```
 
-Use `useCollection()` instead when you need collection methods, error state, multiple documents, or more control over subscriptions.
+The return tuple:
+
+| Index | Type | Value |
+|---|---|---|
+| `0` | `LivequeryDocument<DocState<T>> \| undefined` | The first document in the collection, or `undefined` when not yet loaded |
+| `1` | `LivequeryLoadingState \| null` | Loading state: `null` when idle, `"all"` while the query is in flight |
+| `2` | `{ code: string; message: string } \| null` | Error from the last query, or `null` when no error |
+
+Use `useCollection()` instead when you need collection methods, multiple documents, or more control over subscriptions.
 
 ## `useObservable`
 
@@ -187,7 +205,7 @@ const lazyValue = useObservable(() => source$)
 Behavior notes:
 
 - `BehaviorSubject` is treated specially. Its initial value is read with `getValue()` so the first render can use the current value.
-- Lazy sources are resolved once for the hook lifetime.
+- Lazy sources are resolved once for the hook lifetime. The source function is called only on the first render and is not re-called if the function reference changes later. If you need a different source, the component must remount.
 - If the source is `undefined`, the hook returns the default value, or `undefined` if no default was provided.
 - Reading `.value` or `.getValue()` manually in render is not a replacement for `useObservable()` because it will not subscribe the component to future emissions.
 
@@ -367,7 +385,8 @@ Behavior notes:
 - Calling collection mutations directly during render.
 - Reading `BehaviorSubject` values manually and expecting rerenders.
 - Passing changing `useCollection()` options and expecting the existing collection instance to rebuild.
-- Using `useDocument()` when you need error state or collection methods.
+- Using `useCollection()` when `useDocument()` is sufficient — `useDocument` now returns `[doc, loading, error]` and handles the common case.
+- Using `useDocument()` when you need collection methods (`add`, `update`, `delete`, `sort`, `loadMore`). For mutations, use `useCollection()` and get the document from `collection.items.value[0]`.
 - Importing APIs not listed in the `Exports` section.
 - Calling `useObservable(item$)` for each item inside the parent `.map()` instead of delegating to a child component — this causes the entire list to re-render on every field change of any single item.
 - Observing `collection.loading` in the same component as the item list — loading state changes then re-render the full list.
