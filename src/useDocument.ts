@@ -1,10 +1,10 @@
-import { type Doc } from "@livequery/client"
+import { type Doc, type LivequeryCollectionOptions } from "@livequery/client"
 import { useObservable } from "./useObservable.js"
 import { useCollection } from "./useCollection.js"
 
 
-export const useDocument = <T extends Doc>(ref: string | undefined | '' | null | false, options: { lazy?: boolean } = {}) => {
-    const collection = useCollection<T>(ref, { lazy: options.lazy })
+export const useDocument = <T extends Doc>(ref: string | undefined | '' | null | false, options: Pick<Partial<LivequeryCollectionOptions<T>>, 'lazy' | 'mode' | 'seed'> = {}) => {
+    const collection = useCollection<T>(ref, options)
     const items = useObservable(collection.items)
     const loading = useObservable(collection.loading)
     const error = useObservable(collection.error)
