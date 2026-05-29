@@ -31,11 +31,9 @@ npm install @livequery/react @livequery/client react rxjs
 Create one `LivequeryClient` for your app or data boundary, provide it once, then use hooks inside descendant components.
 
 ```tsx
-import { LivequeryClient } from '@livequery/client'
-import { LivequeryClientProvider } from '@livequery/react'
-
 import { LivequeryClient, LivequeryMemoryStorage } from '@livequery/client'
 import { RestTransporter } from '@livequery/rest'
+import { LivequeryClientProvider } from '@livequery/react'
 
 const client = new LivequeryClient({
   storage: new LivequeryMemoryStorage(),
@@ -75,6 +73,10 @@ Use it when:
 ```
 
 The provider currently expects a `core` prop. Passing `client` will not work unless the implementation is changed.
+
+### SharedWorker
+
+If your app uses a SharedWorker via `@livequery/rpc`, the setup inside the worker is different — but from React's perspective nothing changes. You still construct a `LivequeryClient` and pass it to `LivequeryClientProvider` exactly as shown above. Read the `@livequery/rpc` documentation for how to expose the client from a SharedWorker; the React layer stays the same.
 
 ## `useLivequeryClient`
 
@@ -209,70 +211,174 @@ Behavior notes:
 - If the source is `undefined`, the hook returns the default value, or `undefined` if no default was provided.
 - Reading `.value` or `.getValue()` manually in render is not a replacement for `useObservable()` because it will not subscribe the component to future emissions.
 
-## Rendering a Collection (Mandatory Pattern)
+## 6 Rules for Rendering Collections
 
-`collection.items` is a `BehaviorSubject<BehaviorSubject<T>[]>`. This two-level structure is intentional and must be respected to achieve both realtime updates and high render performance.
+These rules are mandatory. Breaking any one of them causes unnecessary re-renders that defeat the purpose of the two-level reactive structure.
 
-**How it works:**
+### Why two levels?
 
-- The outer `BehaviorSubject` emits a new array only when items are added, removed, or reordered.
-- Each element in the array is itself a `BehaviorSubject<T>` that emits whenever that specific item's fields change.
-- A field update on one item emits only that item's inner subject — the outer array does not change and the parent list does not re-render.
+`collection.items` is a `BehaviorSubject<LivequeryDocument<T>[]>`.
 
-This means correct rendering requires three separate component layers:
+- The **outer** `BehaviorSubject` emits a new array only when items are added, removed, or reordered.
+- Each **element** is a `LivequeryDocument<T>` — itself a `BehaviorSubject<DocState<T>>` — that emits when that specific document's fields change.
+- A field update on one document does **not** cause the outer array to emit. Only that document's own subject emits.
 
-### Rule 1 — Subscribe to the items array in the parent
+This means re-renders can be scoped to exactly the component that owns the changed data — but only if you follow the rules below.
+
+---
+
+### Rule 1 — `LivequeryClientProvider` is required
+
+Every hook in this package reads the nearest `LivequeryClient` from context. There is no fallback. Using any hook outside a provider throws `Context provider is missing`.
+
+```tsx
+// app root or route boundary
+<LivequeryClientProvider core={client}>
+  <YourApp />
+</LivequeryClientProvider>
+```
+
+Create one client per data boundary, not one per component. The client holds the connection and cache — recreating it on every render loses all state.
+
+---
+
+### Rule 2 — SharedWorker: setup differs, React API stays the same
+
+If your app runs `@livequery/client` inside a SharedWorker via `@livequery/rpc`, the worker setup is different. From React's perspective nothing changes — you still receive a `LivequeryClient` and pass it to `LivequeryClientProvider` exactly as normal. Read the `@livequery/rpc` docs for the worker side.
+
+---
+
+### Rule 3 — Place `useCollection` in the component that owns the list
+
+`useCollection` belongs in the component that renders the list with `.map()`. Do not call it in a parent and pass the collection down as a prop — the collection is created once for that component's lifetime.
+
+```tsx
+// ✓ correct — useCollection lives where the list is rendered
+export function TodoList() {
+  const collection = useCollection<Todo>('todos', { lazy: false })
+  const items = useObservable(collection.items, [])
+  return <ul>{items.map(item => <TodoItem key={item.value.id} item={item} />)}</ul>
+}
+
+// ✗ wrong — collection created in parent, passed as prop
+export function Parent() {
+  const collection = useCollection<Todo>('todos')
+  return <TodoList collection={collection} />
+}
+```
+
+---
+
+### Rule 4 — Unwrap `items` with `useObservable`
+
+`collection.items` is a `BehaviorSubject`. You must subscribe to it with `useObservable` to get the current array and re-render when items are added, removed, or reordered.
 
 ```tsx
 const items = useObservable(collection.items, [])
-// items = BehaviorSubject<T>[]
-// Re-renders only when item count or order changes
+// items: LivequeryDocument<Todo>[]
+// re-renders ONLY when count or order changes — not on field updates
 ```
 
-### Rule 2 — Render each item in its own component
+Never read `collection.items.value` directly in render. It gives a snapshot that does not update.
 
-Pass the `BehaviorSubject<T>` as a prop and call `useObservable` inside the child. Field changes re-render only that child.
+---
+
+### Rule 5 — Never call `.value` or `.getValue()` inside `.map()` — delegate to a child component
+
+Each element of `items` is a `LivequeryDocument<T>` (a `BehaviorSubject`). Calling `.value` or `.getValue()` inside the parent map reads the value once — it does not subscribe, so field changes will not re-render.
+
+Pass the document to a child component and call `useObservable` inside:
 
 ```tsx
-function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
-  const item = useObservable(item$)
-  return <li>{item.title}</li>
+// ✗ wrong — reads once, misses future field updates
+{items.map(item => <li key={item.value.id}>{item.value.title}</li>)}
+
+// ✗ also wrong — useObservable in parent map re-renders the whole list on any field change
+{items.map(item => {
+  const todo = useObservable(item)
+  return <li key={todo.id}>{todo.title}</li>
+})}
+
+// ✓ correct — field updates re-render only TodoItem, not the list
+{items.map(item => <TodoItem key={item.value.id} item={item} />)}
+
+function TodoItem({ item }: { item: LivequeryDocument<Todo> }) {
+  const todo = useObservable(item)  // subscribes inside the child
+  return <li>{todo.title}</li>
 }
 ```
 
-### Rule 3 — Render loading state in its own component
+---
 
-`collection.loading` is also a `BehaviorSubject<boolean>`. Place it in a separate component so toggling loading does not re-render the item list.
+### Rule 6 — `loading`, `paging`, and `summary` also belong in separate child components
+
+`collection.loading`, `collection.paging`, and `collection.summary` are all `BehaviorSubject`s. Calling `useObservable` on them in the same component as `items` means every loading toggle or paging update re-renders the entire list.
 
 ```tsx
-function TodoLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
+// ✗ wrong — loading change re-renders the full list
+export function TodoList() {
+  const collection = useCollection<Todo>('todos', { lazy: false })
+  const items = useObservable(collection.items, [])
+  const loading = useObservable(collection.loading)   // ← causes full re-render on change
+  const paging = useObservable(collection.paging)     // ← same
+  ...
+}
+
+// ✓ correct — each subject in its own component
+function TodoLoading({ loading$ }: { loading$: LivequeryCollection<Todo>['loading'] }) {
   const loading = useObservable(loading$)
   if (!loading) return null
   return <p>Loading...</p>
 }
+
+function TodoPaging({ paging$ }: { paging$: LivequeryCollection<Todo>['paging'] }) {
+  const paging = useObservable(paging$)
+  return <p>{paging.current} / {paging.total}</p>
+}
+
+function TodoSummary({ summary$ }: { summary$: LivequeryCollection<Todo>['summary'] }) {
+  const summary = useObservable(summary$)
+  return <p>Open: {summary.open}</p>
+}
 ```
 
-### Full example
+---
+
+### Full compliant example
 
 ```tsx
-import { BehaviorSubject } from 'rxjs'
+import { LivequeryDocument } from '@livequery/client'
 import { useCollection, useObservable } from '@livequery/react'
 
-type Todo = { _id: string; title: string; done: boolean }
+type Todo = { id: string; title: string; done: boolean }
 
-function TodoLoading({ loading$ }: { loading$: BehaviorSubject<boolean> }) {
-  const loading = useObservable(loading$)
-  if (!loading) return null
-  return <p>Loading...</p>
+function TodoItem({ item }: { item: LivequeryDocument<Todo> }) {
+  const todo = useObservable(item)
+  return (
+    <li>
+      <input
+        type="checkbox"
+        checked={todo.done}
+        onChange={() => item.update({ done: !todo.done })}
+      />
+      {todo.title}
+      {todo._updating && ' Saving…'}
+    </li>
+  )
 }
 
-function TodoItem({ item$ }: { item$: BehaviorSubject<Todo> }) {
-  const item = useObservable(item$)
-  return <li>{item.title}</li>
+function TodoLoading({ loading$ }: { loading$: LivequeryCollection<Todo>['loading'] }) {
+  const loading = useObservable(loading$)
+  return loading ? <p>Loading…</p> : null
+}
+
+function TodoPaging({ paging$, onMore }: { paging$: LivequeryCollection<Todo>['paging'], onMore: () => void }) {
+  const paging = useObservable(paging$)
+  if (!paging.next) return null
+  return <button onClick={onMore}>Load more ({paging.total - paging.current} left)</button>
 }
 
 export function TodoList() {
-  // lazy: false — no need to call collection.query() manually
   const collection = useCollection<Todo>('todos', { lazy: false })
   const items = useObservable(collection.items, [])
 
@@ -280,22 +386,15 @@ export function TodoList() {
     <>
       <TodoLoading loading$={collection.loading} />
       <ul>
-        {items.map((item$) => (
-          <TodoItem key={item$.getValue()._id} item$={item$} />
+        {items.map(item => (
+          <TodoItem key={item.value.id} item={item} />
         ))}
       </ul>
+      <TodoPaging paging$={collection.paging} onMore={() => collection.loadMore()} />
     </>
   )
 }
 ```
-
-**Why this matters:**
-
-- Putting `useObservable(collection.loading)` and `useObservable(collection.items)` in the same parent component means every loading toggle re-renders the entire list, even when nothing changed.
-- Calling `useObservable(item$)` inside the parent map instead of a child component means every field change on any single item re-renders the whole list.
-- Following all three rules gives true per-item granularity: only the component that owns a changed field re-renders.
-
-> **Never** flatten `collection.items` by calling `useObservable` on each element inside the parent map. Always delegate to a child component.
 
 ## `useAction`
 
