@@ -8,7 +8,7 @@ type Source<T> = BehaviorSubject<T> | Observable<T>
 type ObservableSource<T> = MaybeFunction<Source<T>> | undefined
 
 const isBehaviorSubject = <T>(source: Source<T> | undefined): source is BehaviorSubject<T> => {
-    return source instanceof BehaviorSubject
+    return typeof (source as Partial<BehaviorSubject<T>> | undefined)?.getValue === 'function'
 }
 
 const hasPipe = <T>(source: Source<T> | undefined): source is Source<T> => {
