@@ -7,5 +7,6 @@ export const useDocument = <T extends Doc>(ref: string | undefined | '' | null |
     const collection = useCollection<T>(ref, { lazy: options.lazy })
     const items = useObservable(collection.items)
     const loading = useObservable(collection.loading)
-    return [items[0], loading] as const
+    const error = useObservable(collection.error)
+    return [items[0], loading, error] as const
 }

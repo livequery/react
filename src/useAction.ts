@@ -20,7 +20,9 @@ export const useAction = <T extends (...args: any[]) => Promise<any>>(fn: T, opt
         } catch (error) {
             options.onError?.(error)
             if (currentRequestId === requestId.current) {
-                set_state({ loading: false, error: error instanceof Error ? { code: 'error', message: error.message } : { code: 'error', message: String(error) } })
+                const code = (error as any)?.code ?? 'error'
+                const message = error instanceof Error ? error.message : ((error as any)?.message ?? String(error))
+                set_state({ loading: false, error: { code, message } })
             }
         }
     }
