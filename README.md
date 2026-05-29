@@ -408,6 +408,8 @@ Any call to `collection.add()`, `collection.update()`, `collection.delete()`, `c
 
 Wrap every action in `useAction` to get `loading`, `data`, and `error` as React state, with automatic race protection (only the latest call updates state).
 
+`useAction` holds state (`loading`, `data`, `error`) that changes every time the action is called. Place it in the **same component as the button**, never in the component that owns `items`. If `useAction` lives in the list parent, every action call re-renders the entire list.
+
 ```tsx
 // ✗ wrong — unhandled rejection, no loading state, can crash
 function AddButton({ collection }: { collection: LivequeryCollection<Todo> }) {
@@ -418,7 +420,20 @@ function AddButton({ collection }: { collection: LivequeryCollection<Todo> }) {
   )
 }
 
-// ✓ correct — loading + error + race-safe
+// ✗ also wrong — useAction in the list parent re-renders the whole list on every call
+function TodoList() {
+  const collection = useCollection<Todo>('todos', { lazy: false })
+  const add = useAction(() => collection.add({ title: 'New', done: false })) // ← wrong place
+  const items = useObservable(collection.items, [])
+  return (
+    <>
+      <button onClick={() => void add()}>Add</button>
+      <ul>{items.map(item => <TodoItem key={item.value.id} item={item} />)}</ul>
+    </>
+  )
+}
+
+// ✓ correct — useAction lives in its own button component, list never re-renders for it
 function AddButton({ collection }: { collection: LivequeryCollection<Todo> }) {
   const add = useAction(() => collection.add({ title: 'New', done: false }))
 
@@ -428,6 +443,17 @@ function AddButton({ collection }: { collection: LivequeryCollection<Todo> }) {
         {add.loading ? 'Adding…' : 'Add'}
       </button>
       {add.error && <p>Error: {add.error.message}</p>}
+    </>
+  )
+}
+
+function TodoList() {
+  const collection = useCollection<Todo>('todos', { lazy: false })
+  const items = useObservable(collection.items, [])
+  return (
+    <>
+      <AddButton collection={collection} />
+      <ul>{items.map(item => <TodoItem key={item.value.id} item={item} />)}</ul>
     </>
   )
 }
