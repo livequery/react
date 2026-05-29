@@ -211,9 +211,9 @@ Behavior notes:
 - If the source is `undefined`, the hook returns the default value, or `undefined` if no default was provided.
 - Reading `.value` or `.getValue()` manually in render is not a replacement for `useObservable()` because it will not subscribe the component to future emissions.
 
-## 6 Rules for Rendering Collections
+## 7 Rules for Using @livequery/react
 
-These rules are mandatory. Breaking any one of them causes unnecessary re-renders that defeat the purpose of the two-level reactive structure.
+These rules are mandatory. Breaking any one of them causes unnecessary re-renders, unhandled errors, or hard-to-debug state bugs.
 
 ### Why two levels?
 
@@ -395,6 +395,91 @@ export function TodoList() {
   )
 }
 ```
+
+---
+
+### Rule 7 — Wrap every action in `useAction`
+
+Any call to `collection.add()`, `collection.update()`, `collection.delete()`, `collection.trigger()`, `item.update()`, `item.del()`, or `item.trigger()` is an async operation that can fail. Calling these directly in an event handler means:
+
+- No loading state — UI has no way to show a spinner or disable the button
+- No error state — a rejected promise becomes an unhandled exception that can crash the component
+- Race conditions — two rapid clicks fire two concurrent calls with no guard
+
+Wrap every action in `useAction` to get `loading`, `data`, and `error` as React state, with automatic race protection (only the latest call updates state).
+
+```tsx
+// ✗ wrong — unhandled rejection, no loading state, can crash
+function AddButton({ collection }: { collection: LivequeryCollection<Todo> }) {
+  return (
+    <button onClick={() => collection.add({ title: 'New', done: false })}>
+      Add
+    </button>
+  )
+}
+
+// ✓ correct — loading + error + race-safe
+function AddButton({ collection }: { collection: LivequeryCollection<Todo> }) {
+  const add = useAction(() => collection.add({ title: 'New', done: false }))
+
+  return (
+    <>
+      <button disabled={add.loading} onClick={() => void add()}>
+        {add.loading ? 'Adding…' : 'Add'}
+      </button>
+      {add.error && <p>Error: {add.error.message}</p>}
+    </>
+  )
+}
+```
+
+The same applies to document-level actions:
+
+```tsx
+function TodoItem({ item }: { item: LivequeryDocument<Todo> }) {
+  const todo = useObservable(item)
+
+  const toggle = useAction(() => item.update({ done: !todo.done }))
+  const remove = useAction(() => item.del())
+  const archive = useAction(() => item.trigger('archive'))
+
+  return (
+    <li>
+      <input type="checkbox" checked={todo.done} disabled={toggle.loading} onChange={() => void toggle()} />
+      {todo.title}
+      <button disabled={remove.loading} onClick={() => void remove()}>
+        {remove.loading ? 'Deleting…' : 'Delete'}
+      </button>
+      {toggle.error && <span>Save failed: {toggle.error.code}</span>}
+      {remove.error && <span>Delete failed: {remove.error.code}</span>}
+    </li>
+  )
+}
+```
+
+And for collection triggers:
+
+```tsx
+function ArchiveAllButton({ collection }: { collection: LivequeryCollection<Todo> }) {
+  const archive = useAction(
+    () => collection.trigger<{ count: number }>('archive-done'),
+    { onError: (e) => console.error('Archive failed', e) }
+  )
+
+  return (
+    <>
+      <button disabled={archive.loading} onClick={() => void archive()}>
+        {archive.loading ? 'Archiving…' : 'Archive done'}
+      </button>
+      {archive.data && <p>Archived {archive.data.count} items</p>}
+    </>
+  )
+}
+```
+
+`useAction` accepts any async function, so it works for non-Livequery async operations too (form submissions, file uploads, etc.).
+
+---
 
 ## `useAction`
 
