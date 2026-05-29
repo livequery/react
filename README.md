@@ -579,14 +579,245 @@ Behavior notes:
 
 `LivequeryClientProvider` and `useLivequeryClient` are built with this helper.
 
+## `useCollection` vs `useDocument`
+
+**Use `useCollection` when you need a list (plural).**
+**Use `useDocument` when you need one item (singular).**
+
+```tsx
+// list — collection ref has an odd number of segments
+const collection = useCollection<Todo>('todos')
+const collection = useCollection<Post>('users/u1/posts')
+
+// single document — document ref has an even number of segments
+const [todo, loading, error] = useDocument<Todo>('todos/todo-1')
+const [post, loading, error] = useDocument<Post>('users/u1/posts/post-1')
+```
+
+`useDocument` is a thin wrapper over `useCollection`. Under the hood it creates the same collection but exposes only `[firstItem, loading, error]`. Use `useCollection` when you need methods like `add`, `update`, `delete`, `sort`, or `loadMore`. Use `useDocument` when you only need to read or mutate one document through `item.update()` and `item.del()`.
+
+---
+
+## TypeScript
+
+### Define your document type with `Doc`
+
+Import `Doc` from `@livequery/client` and extend it. Every document must have an `id: string` field — `Doc<T>` adds it automatically.
+
+```tsx
+import type { Doc } from '@livequery/client'
+
+type Todo = Doc<{
+  title: string
+  done: boolean
+  createdAt: number
+}>
+
+// use the type with hooks
+const collection = useCollection<Todo>('todos')
+const [todo] = useDocument<Todo>('todos/todo-1')
+```
+
+### Import types, not values
+
+Only import types from `@livequery/client` in component files — the runtime objects (`LivequeryClient`, `LivequeryCollection`) live in your setup files, not in every component.
+
+```tsx
+// ✓ correct — type-only imports in components
+import type { Doc, DocState, LivequeryDocument, LivequeryCollection } from '@livequery/client'
+
+// ✗ wrong — importing runtime values you don't construct here
+import { LivequeryClient, LivequeryCollection } from '@livequery/client'
+```
+
+### Type props that receive collection or document
+
+```tsx
+import type { LivequeryCollection, LivequeryDocument, Doc } from '@livequery/client'
+
+type Todo = Doc<{ title: string; done: boolean }>
+
+// list component receives a typed collection
+function TodoList({ collection }: { collection: LivequeryCollection<Todo> }) { ... }
+
+// item component receives a typed document subject
+function TodoItem({ item }: { item: LivequeryDocument<Todo> }) { ... }
+```
+
+---
+
+## Document States
+
+Every document in `items` is a `DocState<T>` which includes internal fields set by the client during optimistic mutations. Use these to show pending and error states in the UI.
+
+| Field | When set | What to show |
+|---|---|---|
+| `_adding` | `local-first` add in progress | "Saving…", spinner, disable form |
+| `_adding_error` | Server rejected the add | Error message, retry button |
+| `_updating` | `local-first` update in progress | "Saving…", field disabled |
+| `_updating_error` | Server rejected the update | Error message next to the field |
+| `_deleting` | `local-first` delete in progress | Row dimmed, "Deleting…" |
+| `_deleting_error` | Server rejected the delete | Error message, undo button |
+| `_local_only` | Created with `local-only` mode | "Draft", "Unsaved" badge |
+
+```tsx
+function TodoItem({ item }: { item: LivequeryDocument<Todo> }) {
+  const todo = useObservable(item)
+
+  const toggle = useAction(() => item.update({ done: !todo.done }))
+  const remove = useAction(() => item.del())
+
+  return (
+    <li style={{ opacity: todo._deleting ? 0.4 : 1 }}>
+      <input
+        type="checkbox"
+        checked={todo.done}
+        disabled={toggle.loading || !!todo._updating}
+        onChange={() => void toggle()}
+      />
+
+      <span>{todo.title}</span>
+
+      {todo._local_only && <span className="badge">Draft</span>}
+      {todo._updating && <span>Saving…</span>}
+      {todo._updating_error && <span>Save failed: {todo._updating_error.message}</span>}
+
+      <button disabled={remove.loading} onClick={() => void remove()}>
+        {todo._deleting ? 'Deleting…' : 'Delete'}
+      </button>
+      {todo._deleting_error && <span>Delete failed — {todo._deleting_error.message}</span>}
+    </li>
+  )
+}
+```
+
+Note: `_adding`, `_updating`, `_deleting` are set by `@livequery/client` during optimistic mutations. They are cleared automatically when the server responds. You do not need to manage them manually.
+
+---
+
+## Common Patterns
+
+### Conditional ref — wait for ID or auth before initializing
+
+Pass a falsy value as `ref` to skip initialization. The collection stays empty with no loading state until `ref` becomes truthy.
+
+```tsx
+function UserTodos({ userId }: { userId: string | null }) {
+  // does not initialize until userId is available
+  const collection = useCollection<Todo>(userId && `users/${userId}/todos`, { lazy: false })
+  const items = useObservable(collection.items, [])
+  return <ul>{items.map(item => <TodoItem key={item.value.id} item={item} />)}</ul>
+}
+```
+
+Accepted falsy values: `undefined`, `null`, `false`, `''`. Any of these skips `initialize()`.
+
+---
+
+### Search with debounce — filter without calling server on every keystroke
+
+Create the collection with a `debounce` value (milliseconds), then call `debounceQuery` on every input change. The actual query fires only after the user stops typing.
+
+```tsx
+function TodoSearch() {
+  const collection = useCollection<Todo>('todos', { debounce: 300 })
+  const items = useObservable(collection.items, [])
+
+  return (
+    <>
+      <input
+        placeholder="Search…"
+        onChange={e => collection.debounceQuery({ 'title:like': e.target.value })}
+      />
+      <ul>{items.map(item => <TodoItem key={item.value.id} item={item} />)}</ul>
+    </>
+  )
+}
+```
+
+`debounceQuery` does nothing unless the collection was created with `debounce: <ms>`.
+
+---
+
+### Pagination — load more / infinite scroll
+
+Use `collection.paging` to check whether more pages are available, then call `loadMore()`. Put the button and paging state in their own component so page changes do not re-render the list.
+
+```tsx
+function TodoPaging({ collection }: { collection: LivequeryCollection<Todo> }) {
+  const paging = useObservable(collection.paging)
+  const loadMore = useAction(() => collection.loadMore())
+
+  if (!paging?.next) return null
+
+  return (
+    <button disabled={loadMore.loading} onClick={() => void loadMore()}>
+      {loadMore.loading ? 'Loading…' : `Load more (${paging.total - paging.current} left)`}
+    </button>
+  )
+}
+
+function TodoList() {
+  const collection = useCollection<Todo>('todos', { lazy: false })
+  const items = useObservable(collection.items, [])
+
+  return (
+    <>
+      <ul>{items.map(item => <TodoItem key={item.value.id} item={item} />)}</ul>
+      <TodoPaging collection={collection} />
+    </>
+  )
+}
+```
+
+`loadMore()` appends results — it does not replace `items`. Use `loadPrev()` for the previous page.
+
+---
+
+### Mutations without querying (lazy collection)
+
+Use `lazy: true` (the default) when you only need `add`, `update`, or `delete` and do not need the query results in this component. The collection is initialized but does not fire a query, so no network request is made and no items are loaded.
+
+```tsx
+// A floating "Add" button that writes to a collection without reading it
+function AddTodoButton() {
+  const collection = useCollection<Todo>('todos') // lazy: true by default — no query
+  const add = useAction(() => collection.add({ title: 'New todo', done: false }))
+
+  return (
+    <button disabled={add.loading} onClick={() => void add()}>
+      {add.loading ? 'Adding…' : 'Add Todo'}
+    </button>
+  )
+}
+```
+
+This avoids an unnecessary fetch. The collection is still connected to the client, so any local-only items you add will be visible to other collection instances on the same client that _do_ query the same ref.
+
+> **Always wrap mutations in `useAction`** — it gives you `loading`, `error`, and race protection with no extra code.
+
+---
+
+### Automatic cleanup
+
+`useCollection` registers a subscription with the client on mount and unsubscribes automatically on unmount. You do not need to write any cleanup code.
+
+```tsx
+// this is enough — no useEffect cleanup needed
+const collection = useCollection<Todo>('todos', { lazy: false })
+// ↑ subscribes on mount, unsubscribes on unmount automatically
+```
+
+---
+
 ## Choosing The Right API
 
 - Use `LivequeryClientProvider` once near the app or data boundary.
 - Use `useLivequeryClient()` only when you need direct client access.
-- Use `useCollection()` when you need collection methods or multiple reactive collection fields.
-- Use `useDocument()` when you only need the first document and loading state.
+- Use `useCollection()` when rendering a list or when you need collection methods.
+- Use `useDocument()` when you need a single document — it returns `[doc, loading, error]`.
 - Use `useObservable()` whenever an RxJS source should drive rendering.
-- Use `useAction()` for async event handlers that need loading, data, and error state.
+- Use `useAction()` for every async action — never call mutations directly in event handlers.
 - Use `createContextFromHook()` for package or app utilities that should expose provider plus hook pairs.
 
 ## Common Mistakes
