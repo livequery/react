@@ -2,11 +2,9 @@
 
 import { describe, expect, test } from "bun:test"
 import React, { act } from "react"
-import { BehaviorSubject, Subject } from "rxjs"
 import { create, type ReactTestRenderer } from "react-test-renderer"
 import { createContextFromHook } from "../src/createContextFromHook.js"
 import { useAction } from "../src/useAction.js"
-import { useObservable } from "../src/useObservable.js"
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -47,46 +45,6 @@ const renderHook = <T,>(hook: () => T): HookRender<T> => {
 }
 
 const nextTick = () => new Promise<void>((resolve) => queueMicrotask(resolve))
-
-describe("useObservable", () => {
-    test("reads BehaviorSubject initial value and updates on emissions", async () => {
-        const subject = new BehaviorSubject(1)
-        const hook = renderHook(() => useObservable(subject))
-
-        expect(hook.current).toBe(1)
-
-        await act(async () => {
-            subject.next(2)
-            await nextTick()
-        })
-
-        expect(hook.current).toBe(2)
-        hook.unmount()
-    })
-
-    test("resolves lazy observable sources once", async () => {
-        const subject = new BehaviorSubject("initial")
-        let calls = 0
-        const hook = renderHook(() => useObservable(() => {
-            calls += 1
-            return subject
-        }))
-
-        expect(calls).toBe(1)
-        expect(hook.current).toBe("initial")
-
-        hook.rerender()
-        expect(calls).toBe(1)
-
-        await act(async () => {
-            subject.next("next")
-            await nextTick()
-        })
-
-        expect(hook.current).toBe("next")
-        hook.unmount()
-    })
-})
 
 describe("createContextFromHook", () => {
     test("provides the factory value to descendants", () => {
@@ -219,41 +177,5 @@ describe("useAction", () => {
         expect(caught).toHaveLength(1)
         expect(caught[0].code).toBe('ERR')
         hook.unmount()
-    })
-})
-
-describe("useObservable", () => {
-    test("returns default value for plain Observable before first emission", () => {
-        const subject = new Subject<number>()
-        const hook = renderHook(() => useObservable(subject as any, 42))
-        expect(hook.current).toBe(42)
-        hook.unmount()
-    })
-
-    test("updates when plain Observable emits", async () => {
-        const subject = new Subject<number>()
-        const hook = renderHook(() => useObservable(subject as any, 0))
-
-        await act(async () => {
-            subject.next(99)
-            await nextTick()
-        })
-
-        expect(hook.current).toBe(99)
-        hook.unmount()
-    })
-
-    test("unsubscribes on unmount", async () => {
-        const subject = new BehaviorSubject(1)
-        const hook = renderHook(() => useObservable(subject))
-
-        hook.unmount()
-
-        await act(async () => {
-            subject.next(2)
-            await nextTick()
-        })
-
-        // No error thrown — subscription was properly cleaned up
     })
 })
