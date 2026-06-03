@@ -79,7 +79,7 @@ The hook throws `Context provider is missing` if no provider exists.
 
 ## `useCollection`
 
-Meaning: creates one `LivequeryCollection<T>` for a hook call and initializes it when `ref` is truthy.
+Meaning: creates a `LivequeryCollection<T>` for the current `ref` (a fresh instance when `ref` changes) and initializes it when `ref` is truthy.
 
 Use when:
 
