@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Observable, BehaviorSubject, tap } from "rxjs";
-import { skip } from "rxjs/operators";
 
 type Source<T> = BehaviorSubject<T> | Observable<T>
 type ObservableSource<T> = Source<T> | undefined
@@ -37,7 +36,6 @@ export function useObservable<T>(o: Input<T>, default_value?: T) {
     if (isFactory && !resolved.current) resolved.current = { source: (o as Factory<T>)() }
     const source = isFactory ? resolved.current!.source : (o as ObservableSource<T>)
 
-    const prev = useRef(source)
     const withDefault = (value: T | null | undefined): T | undefined =>
         value ?? default_value
     const [v, s] = useState<T | undefined>(() =>
@@ -45,13 +43,13 @@ export function useObservable<T>(o: Input<T>, default_value?: T) {
     )
 
     useEffect(() => {
-        const diff = prev.current !== source
-        prev.current = source
-
         if (!hasPipe(source)) return
 
+        // No skip(): a real BehaviorSubject replays its current value synchronously on subscribe
+        // (a no-op setState equal to the seed → React bails, no extra render), while an async
+        // source (e.g. the @livequery/rpc proxy via shareReplay) delivers its FIRST real value
+        // here — which must NOT be skipped.
         const subscription = source.pipe(
-            skip(isBehaviorSubject(source) && !diff ? 1 : 0),
             tap((value) => s(withDefault(value as T | null | undefined))),
         ).subscribe()
         return () => {

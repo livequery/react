@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "bun:test"
 import React, { act } from "react"
-import { BehaviorSubject, Observable, Subject } from "rxjs"
+import { BehaviorSubject, Observable, Subject, shareReplay, tap } from "rxjs"
 import { create, type ReactTestRenderer } from "react-test-renderer"
 import { useObservable } from "../src/useObservable.js"
 
@@ -77,6 +77,22 @@ const makeProxyPlain = <T,>(source: Observable<T>, onInvoke?: () => void) => {
             (prop === "pipe" || prop === "subscribe")
                 ? (source as any)[prop].bind(source)
                 : undefined,
+    })
+}
+
+// Mimics the @livequery/rpc ServiceLinker remote observable: getValue() is null until the
+// first emission, and subscribe() delivers real values ASYNCHRONOUSLY with no synchronous
+// `null` placeholder (shareReplay, not BehaviorSubject(null)).
+const makeAsyncRpcProxy = <T,>(subject: Subject<T>) => {
+    let latest: any = null
+    const shared = subject.pipe(tap((v) => { latest = v }), shareReplay({ bufferSize: 1, refCount: false }))
+    const fn = (() => shared) as any
+    return new Proxy(fn, {
+        get: (_t, prop) => {
+            if (prop === "getValue") return () => latest
+            if (prop === "pipe" || prop === "subscribe") return (shared as any)[prop].bind(shared)
+            return undefined
+        },
     })
 }
 
@@ -466,6 +482,34 @@ describe("useObservable — lifecycle", () => {
 // ════════════════════════════════════════════════════════════════════════════
 // 8. Identity / misc
 // ════════════════════════════════════════════════════════════════════════════
+
+describe("useObservable — async rpc-style proxy (shareReplay, no null placeholder)", () => {
+    test("does not drop the first emitted value", async () => {
+        const subject = new Subject<number>()
+        const proxy = makeAsyncRpcProxy(subject)
+        const hook = renderHook(() => useObservable(proxy as any))
+
+        expect(hook.current).toBeUndefined() // getValue() null, no default
+
+        await emit(() => subject.next(1)) // FIRST real value, arrives async — must NOT be skipped
+        expect(hook.current).toBe(1)
+
+        await emit(() => subject.next(2))
+        expect(hook.current).toBe(2)
+        hook.unmount()
+    })
+
+    test("uses default until the first value arrives", async () => {
+        const subject = new Subject<number>()
+        const proxy = makeAsyncRpcProxy(subject)
+        const hook = renderHook(() => useObservable(proxy as any, 99))
+
+        expect(hook.current).toBe(99)
+        await emit(() => subject.next(7))
+        expect(hook.current).toBe(7)
+        hook.unmount()
+    })
+})
 
 describe("useObservable — identity", () => {
     test("returns the exact default reference while loading", () => {
