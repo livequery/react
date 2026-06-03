@@ -97,7 +97,7 @@ The hook must be used under a matching provider. If it is called outside the pro
 
 ## `useCollection`
 
-`useCollection<T>(ref, options)` creates one `LivequeryCollection<T>` for the component, initializes it when `ref` is truthy, and returns the collection instance.
+`useCollection<T>(ref, options)` creates a `LivequeryCollection<T>` for the current `ref`, initializes it when `ref` is truthy, and returns the collection instance. When `ref` changes, a fresh collection is created — its state is reset and reloaded for the new ref.
 
 Use it when a component needs the full collection API: reactive state plus methods such as querying or mutations.
 

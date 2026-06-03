@@ -119,7 +119,7 @@ See `AGENT_API_GUIDE.md` for the full checklist and annotated example.
 
 ## Runtime Model
 
-- `useCollection()` memoizes one `LivequeryCollection` per hook call and re-initializes it when `ref` changes.
+- `useCollection()` memoizes a `LivequeryCollection` with memo deps `[client, ref]`; when `ref` changes it creates a fresh instance and initializes it for the new ref.
 - `useDocument()` returns `[items[0], loading]` from the underlying collection state.
 - `useObservable()` subscribes to an observable source inside an effect and mirrors emissions into React state. `BehaviorSubject` initial values are read with `getValue()`, and lazy source functions are resolved once.
 - `LivequeryClientProvider` is built with `createContextFromHook()` and supplies the active `LivequeryClient` to hooks.
@@ -135,7 +135,7 @@ See `AGENT_API_GUIDE.md` for the full checklist and annotated example.
 
 ## Known Sharp Edges
 
-- `useCollection()` memoizes the collection with an empty dependency array, so option changes after first render do not rebuild the instance.
+- `useCollection()` memoizes the collection with deps `[client, ref]`: changing `ref` rebuilds (a fresh instance), but changing `options`/`filters` while `ref` stays the same does not rebuild the instance.
 - `useDocument()` returns the first item in collection state rather than a separate dedicated document object.
 - `useObservable()` uses runtime detection and effect subscriptions; subtle changes can alter rerender behavior.
 - `README.md` can lag behind `src/index.ts`; prefer the source barrel when checking actual exports.

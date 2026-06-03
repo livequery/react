@@ -101,8 +101,8 @@ Use `lazy: true` (the default) only when the query must be triggered manually â€
 Important:
 
 - Falsy refs skip initialization.
-- The collection instance is memoized for the lifetime of the hook call.
-- `options` are captured when the collection instance is first created.
+- The collection instance is memoized per `ref` (memo deps `[client, ref]`); when `ref` changes a fresh instance is created.
+- `options` are captured when the collection instance is created â€” i.e. on mount and again whenever `ref` changes.
 - If behavior depends on changing options, either stabilize options or intentionally remount the component/hook.
 - Do not call query or mutation methods during render.
 
