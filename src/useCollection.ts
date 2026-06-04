@@ -11,11 +11,8 @@ export const useCollection = <T extends Doc>(ref: string | undefined | '' | null
     // dependency — keying on it would rebuild the collection on every render if a caller ever
     // passed an unstable client.
     const collection = useMemo(() => new LivequeryCollection<T>(client, options), [ref])
-    console.log({ref})
     useEffect(() => {
-        console.log({ref})
         if (!client || !ref) return
-        console.log(`Initializing collection for ref: ${ref}`)
         const linker = collection.initialize(ref)
         return () => {
             linker?.unsubscribe()

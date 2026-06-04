@@ -4,7 +4,7 @@
     "url": "https://github.com/livequery/react"
   },
   "type": "module",
-  "version": "2.0.144",
+  "version": "2.0.145",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -49,14 +49,14 @@
     "dist/**/*"
   ],
   "devDependencies": {
-    "@livequery/client": "^2.0.144",
+    "@livequery/client": "^2.0.145",
     "@types/bun": "^1.3.14",
     "@types/react": "^19.2.14",
     "@types/react-test-renderer": "^19.1.0",
     "react-test-renderer": "^19.2.6"
   },
   "peerDependencies": {
-    "@livequery/client": "^2.0.144",
+    "@livequery/client": "^2.0.145",
     "react": "^19.2.5",
     "rxjs": "^7.8.2"
   },
