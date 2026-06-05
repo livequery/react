@@ -5,21 +5,21 @@
     "": {
       "name": "@livequery/react",
       "devDependencies": {
-        "@livequery/client": "^2.0.135",
+        "@livequery/client": "^2.0.146",
         "@types/bun": "^1.3.14",
         "@types/react": "^19.2.14",
         "@types/react-test-renderer": "^19.1.0",
         "react-test-renderer": "^19.2.6",
       },
       "peerDependencies": {
-        "@livequery/client": "^2.0.135",
+        "@livequery/client": "^2.0.146",
         "react": "^19.2.5",
         "rxjs": "^7.8.2",
       },
     },
   },
   "packages": {
-    "@livequery/client": ["@livequery/client@2.0.135", "", { "dependencies": { "rxjs": "^7.8.2", "uuidv7": "^1.2.1" } }, "sha512-AY/vbu7xFYYKVlTJoUUcYdhXVZOoJ58FNSvXijFJI+O1jg+yRIHvqMEHOEzu4qftQQ9giYMlmNv6FgmG/im01Q=="],
+    "@livequery/client": ["@livequery/client@2.0.146", "", { "dependencies": { "rxjs": "^7.8.2", "uuidv7": "^1.2.1" } }, "sha512-alvhYx1PvG7yC1zv7bJC6kPhbHtu9KrmzWOTZF6r3xZKELJ5INOq+FOQWG48jE/c0e5+MVejBlFxYRpGcTfgrQ=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
