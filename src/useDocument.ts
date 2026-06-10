@@ -3,7 +3,7 @@ import { useObservable } from "./useObservable.js"
 import { useCollection } from "./useCollection.js"
 
 
-export const useDocument = <T extends Doc>(ref: string | undefined | '' | null | false, options: Pick<Partial<LivequeryCollectionOptions<T>>, 'lazy' | 'mode' | 'seed'> = {}) => {
+export const useDocument = <T extends Doc>(ref: string | undefined | '' | null | false, options: Pick<Partial<LivequeryCollectionOptions<T>>, 'lazy' | 'mode' | 'seed' | 'ssr'> = {}) => {
     const collection = useCollection<T>(ref, options)
     const items = useObservable(collection.items)
     const loading = useObservable(collection.loading)
