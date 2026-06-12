@@ -20,6 +20,7 @@ npm install @livequery/react @livequery/client react rxjs
 
 - `LivequeryClientProvider`
 - `useLivequeryClient`
+- `useLivequeryContext`
 - `useCollection`
 - `useDocument`
 - `useObservable`
@@ -74,6 +75,18 @@ Use it when:
 
 The provider currently expects a `core` prop. Passing `client` will not work unless the implementation is changed.
 
+### Provider-level `context`
+
+The provider also accepts an optional `context` prop — an arbitrary bag forwarded with every collection operation down to the transporter's `onRequest` hook (see [`@livequery/client` → context](../client/README.md#context)). The canonical use is per-tab multi-account routing: set `{ account_id }` once at the provider and every `useCollection()` below it inherits it.
+
+```tsx
+<LivequeryClientProvider core={client} context={{ account_id: currentAccountId }}>
+  <TodoList />
+</LivequeryClientProvider>
+```
+
+Changing the provider `context` (e.g. switching account) re-creates every descendant collection under the new context — old subscriptions tear down and re-subscribe. A per-call `options.context` on `useCollection` overrides the provider one (shallow merge, per-call wins).
+
 ### SharedWorker
 
 If your app uses a SharedWorker via `@livequery/rpc`, the setup inside the worker is different — but from React's perspective nothing changes. You still construct a `LivequeryClient` and pass it to `LivequeryClientProvider` exactly as shown above. Read the `@livequery/rpc` documentation for how to expose the client from a SharedWorker; the React layer stays the same.
@@ -95,9 +108,34 @@ export function ClientStatus() {
 
 The hook must be used under a matching provider. If it is called outside the provider tree, the generated context hook throws `Context provider is missing`.
 
+## `useLivequeryContext`
+
+`useLivequeryContext()` reads the optional `context` bag passed to `LivequeryClientProvider`. Returns `undefined` when no `context` prop was provided.
+
+```tsx
+import { useLivequeryContext } from '@livequery/react'
+
+export function CurrentAccount() {
+  const context = useLivequeryContext()
+  return <span>account: {context?.account_id ?? 'none'}</span>
+}
+```
+
+Most code never calls this directly — `useCollection()` already merges this provider context into the collections it creates. Use it only when you need to read the active context for display or branching.
+
 ## `useCollection`
 
 `useCollection<T>(ref, options)` creates a `LivequeryCollection<T>` for the current `ref`, initializes it when `ref` is truthy, and returns the collection instance. When `ref` changes, a fresh collection is created — its state is reset and reloaded for the new ref.
+
+The collection's `context` is the provider `context` shallow-merged with `options.context` (per-call wins). `useCollection` keys the collection on both `ref` **and** the resolved context, so changing either creates a fresh instance — switching account therefore tears down the old subscription and re-subscribes under the new context.
+
+```tsx
+// inherits provider context (e.g. { account_id })
+const todos = useCollection<Todo>('todos', { lazy: false })
+
+// override / extend context for this collection only
+const orders = useCollection<Order>('orders', { lazy: false, context: { account_id: otherId } })
+```
 
 Use it when a component needs the full collection API: reactive state plus methods such as querying or mutations.
 

@@ -18,6 +18,7 @@ Current public APIs:
 
 - `LivequeryClientProvider`
 - `useLivequeryClient`
+- `useLivequeryContext`
 - `useCollection`
 - `useDocument`
 - `useObservable`
@@ -60,6 +61,7 @@ Important:
 
 - The prop is currently named `core`.
 - Do not generate `<LivequeryClientProvider client={client}>` unless the implementation is changed first.
+- Optional `context` prop: an arbitrary bag forwarded with every collection operation to the transporter's `onRequest` (e.g. `{ account_id }` for multi-account). `useCollection` merges it into each collection; changing it re-subscribes descendant collections. `<LivequeryClientProvider core={client} context={{ account_id }}>`.
 
 ## `useLivequeryClient`
 
@@ -76,6 +78,18 @@ Avoid when:
 - passing the collection object is clearer than accessing the client directly
 
 The hook throws `Context provider is missing` if no provider exists.
+
+## `useLivequeryContext`
+
+Meaning: reads the optional `context` bag passed to `LivequeryClientProvider`; returns `undefined` when none was provided.
+
+Use when:
+
+- a component needs to read the active context (e.g. show the current `account_id`)
+
+Avoid when:
+
+- you only want the context applied to data access — `useCollection()` already merges it for you
 
 ## `useCollection`
 
@@ -101,9 +115,10 @@ Use `lazy: true` (the default) only when the query must be triggered manually �
 Important:
 
 - Falsy refs skip initialization.
-- The collection instance is memoized per `ref` (memo deps `[client, ref]`); when `ref` changes a fresh instance is created.
-- `options` are captured when the collection instance is created — i.e. on mount and again whenever `ref` changes.
-- If behavior depends on changing options, either stabilize options or intentionally remount the component/hook.
+- The collection instance is memoized per `ref` and resolved context (memo deps `[ref, contextKey]`, where `contextKey = JSON.stringify({ ...providerContext, ...options.context })`); when either changes a fresh instance is created. `client` is intentionally NOT a dep (it is stable via the provider).
+- The collection's context = provider `context` shallow-merged with `options.context` (per-call wins).
+- `options` are captured when the collection instance is created — i.e. on mount and again whenever `ref` or the resolved context changes.
+- If behavior depends on changing options (other than context), either stabilize options or intentionally remount the component/hook.
 - Do not call query or mutation methods during render.
 
 ## `useDocument`

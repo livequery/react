@@ -139,6 +139,41 @@ describe("useCollection — ref change reload (integration with real client)", (
         act(() => { renderer.unmount() })
     })
 
+    test("unmount + remount reloads data", async () => {
+        const client = makeClient()
+        let ids: string[] = []
+        let renderer: ReactTestRenderer
+        let shown = true
+
+        const Inner = () => {
+            const collection = useCollection<Todo>("posts", { lazy: false })
+            const items = useObservable(collection.items, [])
+            ids = items.map((d: any) => d.value.id)
+            return null
+        }
+        const tree = () => (
+            <LivequeryClientProvider core={client}>
+                {shown ? <Inner key="inner" /> : null}
+            </LivequeryClientProvider>
+        )
+
+        act(() => { renderer = create(tree()) })
+        await tick()
+        expect(ids).toEqual(["p1"])  // initial load
+
+        // Unmount
+        shown = false
+        act(() => { renderer.update(tree()) })
+
+        // Remount
+        shown = true
+        act(() => { renderer.update(tree()) })
+        await tick()
+        expect(ids).toEqual(["p1"])  // must reload after remount
+
+        act(() => { renderer.unmount() })
+    })
+
     test("items do not retain stale data from the previous ref", async () => {
         const client = makeClient()
         let ref = "posts"
